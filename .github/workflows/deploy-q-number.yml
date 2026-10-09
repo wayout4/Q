@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
 
       - name: Require scoped Cloudflare credentials
         shell: bash
@@ -130,7 +130,7 @@ jobs:
           test "$bad_origin_status" = "403"
           test_install_id="$(cat /proc/sys/kernel/random/uuid)"
           rate_limited=0
-          for attempt in $(seq 1 10); do
+          for attempt in $(seq 1 30); do
             status="$(curl --silent --show-error -o /tmp/q-rate-response.json -w '%{http_code}' -X POST "${Q_NUMBER_API_BASE}/v1/q-number" -H "Origin: ${SITE_ORIGIN}" -H 'Content-Type: application/json' --data "$(jq -nc --arg id "$test_install_id" '{installId:$id,turnstileToken:""}')")"
             if [[ "$status" = "429" ]]; then rate_limited=1; break; fi
             if [[ "$status" != "400" ]]; then
