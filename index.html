@@ -29,12 +29,13 @@
       <article class="status-card"><div class="card-icon green">◷</div><div><p class="card-label">SESSION</p><strong id="session-value">Active</strong><small>Local-first workspace</small></div></article>
     </section>
     <section class="apps-section">
-      <div class="section-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h2>Applications</h2></div><span id="app-count" class="count-pill">5 apps</span></div>
+      <div class="section-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h2>Applications</h2></div><span id="app-count" class="count-pill">6 apps</span></div>
       <div id="app-grid" class="app-grid">
         <button class="app-tile" data-app="notes"><span class="app-icon icon-notes">✎</span><span>Notes</span><small>Local notes</small></button>
         <button class="app-tile" data-app="calculator"><span class="app-icon icon-calc">＋</span><span>Calculator</span><small>Quick math</small></button>
         <button class="app-tile" data-app="network"><span class="app-icon icon-network">⌁</span><span>Network</span><small>Connection status</small></button>
         <button class="app-tile" data-app="settings"><span class="app-icon icon-settings">⚙</span><span>Settings</span><small>Personalize</small></button>
+        <button class="app-tile" data-app="qnumber"><span class="app-icon icon-about">Q#</span><span>My Q#</span><small>Quantum identity</small></button>
         <button class="app-tile" data-app="about"><span class="app-icon icon-about">Q</span><span>About Quantum</span><small>System details</small></button>
       </div>
       <p id="no-results" class="empty-state" hidden>No apps match that search. Try “notes”, “network”, or “settings”.</p>
@@ -46,6 +47,7 @@
     <button data-app="notes" aria-label="Open Notes" title="Notes">✎</button><button data-app="calculator" aria-label="Open Calculator" title="Calculator">＋</button><button data-app="network" aria-label="Open Network" title="Network">⌁</button><button data-app="settings" aria-label="Open Settings" title="Settings">⚙</button>
   </nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./quantum-config.js" defer></script>
   <script src="./app.js" defer></script>
   <script>
     (() => {
