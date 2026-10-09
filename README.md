@@ -58,6 +58,9 @@ Notes and appearance preferences are stored in the current browser profile. They
 
 ## Public deployment
 
+To provision the real Q# assignment service, open **Settings → Secrets and variables → Actions** and add repository secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. The token must be scoped to this Cloudflare account with **D1 Edit**, **Workers Scripts Edit**, and **Turnstile Sites Read + Write**. Then open **Actions → Deploy Q# API and site → Run workflow**. That workflow creates or reuses the D1 database and Turnstile widget, applies the schema, deploys the rate-limited Worker, checks live readiness and rejection paths, writes the public API URL/site key to `quantum-config.js`, and deploys the configured site. Never commit the Cloudflare API token or Turnstile secret. The workflow cannot run successfully until those two secrets are set by an account-authorized person. After it succeeds, open the site and complete the Turnstile check to receive a real Q#; the system cannot complete that user verification on your behalf.
+
+
 The repository includes a GitHub Pages deployment workflow. On the first deployment, it attempts to enable Pages through GitHub Actions. If repository policy blocks that operation, open **Settings → Pages**, set the build and deployment source to **GitHub Actions**, then rerun the **Deploy Quantum OS Web Edition** workflow. A live URL is only confirmed after the deployment job succeeds.
 
 ## Release package
