@@ -189,7 +189,7 @@
 
   function renderQNumber(body) {
     const config = window.QUANTUM_CONFIG || {};
-    const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\\/$/, "") : "";
+    const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\/$/, "") : "";
     const siteKey = typeof config.turnstileSiteKey === "string" ? config.turnstileSiteKey : "";
     let turnstileToken = "";
     let turnstileWidget = null;
