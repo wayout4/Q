@@ -81,9 +81,51 @@
   }
 
   function calculate(expression) {
-    if (!expression || !/^[\d\s()+\-*/%.]+$/.test(expression)) throw new Error("Only basic arithmetic is supported.");
-    if (/[/][\s]*0(?:\D|$)/.test(expression)) throw new Error("Division by zero is not allowed.");
-    const result = Function('"use strict"; return (' + expression + ')')();
+    if (!expression || !/^[\\d\\s()+\\-*/%.]+$/.test(expression)) throw new Error("Only basic arithmetic is supported.");
+    let index = 0;
+    const input = expression.replace(/\\s+/g, "");
+    function number() {
+      const begin = index;
+      while (/[0-9.]/.test(input[index] || "") && index < input.length) index++;
+      const token = input.slice(begin, index);
+      if (!token || (token.match(/\\./g) || []).length > 1) throw new Error("Invalid number.");
+      const value = Number(token);
+      if (!Number.isFinite(value)) throw new Error("Invalid number.");
+      return value;
+    }
+    function factor() {
+      if (input[index] === "+") { index++; return factor(); }
+      if (input[index] === "-") { index++; return -factor(); }
+      if (input[index] === "(") {
+        index++;
+        const value = sum();
+        if (input[index] !== ")") throw new Error("Missing closing parenthesis.");
+        index++;
+        return value;
+      }
+      return number();
+    }
+    function term() {
+      let value = factor();
+      while (["*", "/", "%"].includes(input[index])) {
+        const operator = input[index++];
+        const right = factor();
+        if ((operator === "/" || operator === "%") && right === 0) throw new Error("Division by zero is not allowed.");
+        value = operator === "*" ? value * right : operator === "/" ? value / right : value % right;
+      }
+      return value;
+    }
+    function sum() {
+      let value = term();
+      while (input[index] === "+" || input[index] === "-") {
+        const operator = input[index++];
+        const right = term();
+        value = operator === "+" ? value + right : value - right;
+      }
+      return value;
+    }
+    const result = sum();
+    if (index !== input.length) throw new Error("Invalid arithmetic expression.");
     if (!Number.isFinite(result)) throw new Error("Result is not a finite number.");
     return String(Number(result.toPrecision(12)));
   }
