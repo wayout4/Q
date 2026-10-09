@@ -22,9 +22,8 @@ jobs:
     name: Provision, verify, and deploy Q#
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    # Keep Cloudflare credentials in repository Actions secrets. The github-pages
+    # environment can shadow repository secrets with an environment-level secret.
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '2af66de76fa7bf059ed37b9da263c0d8' }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
