@@ -2,6 +2,11 @@ name: Deploy Q# API and site
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-q-number.yml'
+      - 'q-number-worker/**'
 
 permissions:
   contents: write
