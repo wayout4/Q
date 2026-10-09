@@ -23,9 +23,14 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Validate JavaScript syntax
-        run: node --check app.js
+        run: |
+          node --check app.js
+          node --check quantum-config.js
+          node --check q-number-worker/src/index.js
       - name: Run static acceptance tests
         run: python3 -m unittest discover -s tests -v
+      - name: Test Q# assignment API
+        run: node --test tests/q-number-worker.test.mjs
       - name: Validate manifest
         run: python3 -m json.tool manifest.webmanifest
       - name: Install browser test dependency
