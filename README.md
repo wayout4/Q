@@ -55,6 +55,10 @@ Quantum OS uses the connectivity exposed by its host browser and device. `naviga
 
 Notes and appearance preferences are stored in the current browser profile. They are not synced to a cloud account. Clearing browser site data may remove them. This build does not request location, microphone, contacts, or other device permissions.
 
+## Public deployment
+
+The repository includes a GitHub Pages deployment workflow. On the first deployment, it attempts to enable Pages through GitHub Actions. If repository policy blocks that operation, open **Settings → Pages**, set the build and deployment source to **GitHub Actions**, then rerun the **Deploy Quantum OS Web Edition** workflow. A live URL is only confirmed after the deployment job succeeds.
+
 ## Release package
 
 Every successful CI run uploads a `quantum-os-web` artifact with the static application files and a `SHA256SUMS` file. Use the [Actions page](https://github.com/wayout4/Q/actions) to retrieve the artifact from a successful run.
