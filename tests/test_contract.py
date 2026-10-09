@@ -66,6 +66,20 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('quantum-config.js', self.html)
         self.assertIn('turnstileToken', self.js)
 
+    def test_q_number_production_bootstrap_and_rate_limit_are_configured(self):
+        config = (ROOT / "q-number-worker/wrangler.toml.example").read_text(encoding="utf-8")
+        worker_source = (ROOT / "q-number-worker/src/index.js").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/deploy-q-number.yml").read_text(encoding="utf-8")
+        self.assertIn('name = "Q_NUMBER_RATE_LIMITER"', config)
+        self.assertIn("limit = 5", config)
+        self.assertIn("period = 60", config)
+        self.assertIn("env.Q_NUMBER_RATE_LIMITER.limit({ key: installId })", worker_source)
+        self.assertIn("Too many registration attempts", worker_source)
+        self.assertIn("CLOUDFLARE_API_TOKEN", workflow)
+        self.assertIn("--secrets-file=q-number-worker/.worker-secrets.json", workflow)
+        self.assertIn("::add-mask::$turnstile_secret", workflow)
+        self.assertIn("Deploy configured Quantum OS to GitHub Pages", workflow)
+
     def test_calculator_does_not_execute_dynamic_code(self):
         self.assertIn("function factor()", self.js)
         self.assertIn("function term()", self.js)
