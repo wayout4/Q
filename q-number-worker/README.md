@@ -23,7 +23,7 @@ This Worker issues stable, unique Q# identifiers per browser installation using 
 
 ## Production requirements before broad public launch
 
-- Configure Cloudflare rate limiting / WAF rules for `POST /v1/q-number`, monitor abuse and D1 quotas, and alert on elevated errors.
+- Before broad public launch, add Cloudflare WAF/rate-limit rules as a second abuse layer, monitor Worker errors and D1 quotas, and alert on elevated errors.
 - Add account authentication and recovery before claiming one number per human or supporting number ownership transfer.
 - Define retention, deletion, moderation, abuse reporting, and support processes.
 - If Q# is to route real calls or texts, integrate a licensed communications provider and implement consent, verification, number portability, emergency-calling policy, and regulatory review. This repository does not implement those telecom functions.
