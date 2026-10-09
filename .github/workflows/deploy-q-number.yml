@@ -1,0 +1,201 @@
+name: Deploy Q# API and site
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: quantum-q-number-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Provision, verify, and deploy Q#
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_API: https://api.cloudflare.com/client/v4
+      SITE_ORIGIN: https://wayout4.github.io
+      SITE_HOSTNAME: wayout4.github.io
+      D1_NAME: quantum-q-number
+      TURNSTILE_NAME: Quantum Q# Production
+    steps:
+      - name: Check out Quantum OS
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Require scoped Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_ACCOUNT_ID}" || -z "${CLOUDFLARE_API_TOKEN}" ]]; then
+            echo "::error::Add repository Actions secrets CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN, then rerun this workflow."
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Wrangler
+        run: npm install --no-save wrangler@latest
+
+      - name: Create or reuse D1 database and Turnstile widget
+        id: provision
+        shell: bash
+        run: |
+          set -euo pipefail
+          auth=(-H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json")
+          db_list="$(curl --fail-with-body --silent --show-error "${CF_API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database?per_page=1000" "${auth[@]}")"
+          db_id="$(jq -r --arg name "${D1_NAME}" '[.result[]? | select(.name == $name)][0].uuid // empty' <<< "$db_list")"
+          if [[ -z "$db_id" ]]; then
+            db_created="$(curl --fail-with-body --silent --show-error -X POST "${CF_API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database" "${auth[@]}" --data "$(jq -nc --arg name "${D1_NAME}" '{name:$name}')")"
+            db_id="$(jq -r '.result.uuid // empty' <<< "$db_created")"
+          fi
+          if [[ -z "$db_id" ]]; then
+            echo "::error::Cloudflare did not return the D1 database ID."
+            exit 1
+          fi
+
+          widget_list="$(curl --fail-with-body --silent --show-error "${CF_API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/challenges/widgets?per_page=1000" "${auth[@]}")"
+          sitekey="$(jq -r --arg name "${TURNSTILE_NAME}" '[.result[]? | select(.name == $name)][0].sitekey // empty' <<< "$widget_list")"
+          if [[ -n "$sitekey" ]]; then
+            widget_detail="$(curl --fail-with-body --silent --show-error "${CF_API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/challenges/widgets/${sitekey}" "${auth[@]}")"
+          else
+            widget_detail="$(curl --fail-with-body --silent --show-error -X POST "${CF_API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/challenges/widgets" "${auth[@]}" --data "$(jq -nc --arg name "${TURNSTILE_NAME}" --arg domain "${SITE_HOSTNAME}" '{name:$name, mode:"managed", domains:[$domain]}')")"
+          fi
+          if [[ "$(jq -r '.success' <<< "$widget_detail")" != "true" ]]; then
+            echo "::error::Cloudflare Turnstile API failed to create/read the production widget."
+            exit 1
+          fi
+          sitekey="$(jq -r '.result.sitekey // empty' <<< "$widget_detail")"
+          turnstile_secret="$(jq -r '.result.secret // empty' <<< "$widget_detail")"
+          if [[ -z "$sitekey" || -z "$turnstile_secret" ]]; then
+            echo "::error::Cloudflare did not return the Turnstile site key and secret. Check Turnstile Sites Read/Write permissions."
+            exit 1
+          fi
+          echo "::add-mask::$turnstile_secret"
+          echo "Q_NUMBER_D1_DATABASE_ID=$db_id" >> "$GITHUB_ENV"
+          echo "TURNSTILE_SITE_KEY=$sitekey" >> "$GITHUB_ENV"
+          echo "TURNSTILE_SECRET=$turnstile_secret" >> "$GITHUB_ENV"
+          echo "D1 database and Turnstile widget are ready."
+
+      - name: Generate production Worker configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed "s/REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID/${Q_NUMBER_D1_DATABASE_ID}/" q-number-worker/wrangler.toml.example > q-number-worker/wrangler.toml
+          python3 - <<'PY'
+          import json, os
+          with open("q-number-worker/.worker-secrets.json", "w", encoding="utf-8") as f:
+              json.dump({"TURNSTILE_SECRET": os.environ["TURNSTILE_SECRET"]}, f)
+          PY
+          chmod 600 q-number-worker/.worker-secrets.json
+
+      - name: Apply D1 schema
+        run: npx wrangler d1 execute quantum-q-number --remote --file=q-number-worker/schema.sql --config=q-number-worker/wrangler.toml
+
+      - name: Deploy Worker with private Turnstile secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler deploy --config=q-number-worker/wrangler.toml --secrets-file=q-number-worker/.worker-secrets.json 2>&1 | tee /tmp/q-number-deploy.log
+          api_base="$(grep -Eo 'https://quantum-q-number-api\.[[:alnum:].-]+\.workers\.dev' /tmp/q-number-deploy.log | tail -n 1 || true)"
+          if [[ -z "$api_base" ]]; then
+            echo "::error::Wrangler deployed without exposing a workers.dev URL. Check that workers.dev is enabled for this Cloudflare account."
+            exit 1
+          fi
+          echo "Q_NUMBER_API_BASE=$api_base" >> "$GITHUB_ENV"
+          rm -f q-number-worker/.worker-secrets.json
+
+      - name: Verify live API readiness and abuse controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          health="$(curl --fail-with-body --silent --show-error -H "Origin: ${SITE_ORIGIN}" "${Q_NUMBER_API_BASE}/healthz")"
+          jq -e '.status == "ok" and .registrationEnabled == true' <<< "$health" >/dev/null
+          bad_origin_status="$(curl --silent --show-error -o /tmp/q-bad-origin.json -w '%{http_code}' -H 'Origin: https://example.invalid' "${Q_NUMBER_API_BASE}/healthz")"
+          test "$bad_origin_status" = "403"
+          test_install_id="$(cat /proc/sys/kernel/random/uuid)"
+          rate_limited=0
+          for attempt in $(seq 1 10); do
+            status="$(curl --silent --show-error -o /tmp/q-rate-response.json -w '%{http_code}' -X POST "${Q_NUMBER_API_BASE}/v1/q-number" -H "Origin: ${SITE_ORIGIN}" -H 'Content-Type: application/json' --data "$(jq -nc --arg id "$test_install_id" '{installId:$id,turnstileToken:""}')")"
+            if [[ "$status" = "429" ]]; then rate_limited=1; break; fi
+            if [[ "$status" != "400" ]]; then
+              echo "::error::Unexpected response during live validation: HTTP $status"
+              cat /tmp/q-rate-response.json
+              exit 1
+            fi
+          done
+          if [[ "$rate_limited" != "1" ]]; then
+            echo "::error::Live Q# rate-limit smoke test did not observe HTTP 429 within 10 attempts."
+            exit 1
+          fi
+          echo "PASS: live readiness, origin rejection, missing-token rejection, and rate limiting."
+
+      - name: Configure public Q# client
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > quantum-config.js <<EOF
+          /* Public client configuration only. The Turnstile secret stays server-side. */
+          window.QUANTUM_CONFIG = Object.freeze({
+            apiBase: "${Q_NUMBER_API_BASE}",
+            turnstileSiteKey: "${TURNSTILE_SITE_KEY}"
+          });
+          EOF
+          node --check quantum-config.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- quantum-config.js; then
+            git add quantum-config.js
+            git commit -m "Configure live Quantum Q# registration endpoint"
+            git push origin HEAD:main
+          fi
+
+      - name: Remove temporary secret files
+        if: always()
+        run: rm -f q-number-worker/.worker-secrets.json q-number-worker/wrangler.toml
+
+      - name: Validate frontend and Worker tests
+        run: |
+          node --check app.js
+          node --check quantum-config.js
+          node --check q-number-worker/src/index.js
+          python3 -m unittest discover -s tests -v
+          node --test tests/q-number-worker.test.mjs
+          python3 -m json.tool manifest.webmanifest
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Assemble deployable site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp index.html styles.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js dist/
+          cp README.md dist/ABOUT.md
+          (cd dist && sha256sum index.html styles.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js > SHA256SUMS)
+          (cd dist && sha256sum -c SHA256SUMS)
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy configured Quantum OS to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
