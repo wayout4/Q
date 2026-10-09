@@ -81,14 +81,14 @@
   }
 
   function calculate(expression) {
-    if (!expression || !/^[\\d\\s()+\\-*/%.]+$/.test(expression)) throw new Error("Only basic arithmetic is supported.");
+    if (!expression || !/^[\d\s()+\-*\/%.]+$/.test(expression)) throw new Error("Only basic arithmetic is supported.");
     let index = 0;
-    const input = expression.replace(/\\s+/g, "");
+    const input = expression.replace(/\s+/g, "");
     function number() {
       const begin = index;
       while (/[0-9.]/.test(input[index] || "") && index < input.length) index++;
       const token = input.slice(begin, index);
-      if (!token || (token.match(/\\./g) || []).length > 1) throw new Error("Invalid number.");
+      if (!token || (token.match(/\./g) || []).length > 1) throw new Error("Invalid number.");
       const value = Number(token);
       if (!Number.isFinite(value)) throw new Error("Invalid number.");
       return value;
