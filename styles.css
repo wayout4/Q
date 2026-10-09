@@ -2,3 +2,11 @@
 
 /* Ensure launcher search filters remain hidden despite tile layout styles. */
 .app-tile[hidden]{display:none!important}
+
+/* Q# identity card: remains readable on narrow phone screens. */
+.qnumber-card{display:grid;gap:10px;padding:20px;margin:16px 0;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,rgba(169,148,255,.15),rgba(114,220,243,.07));overflow-wrap:anywhere}
+.qnumber-label{font-size:11px;letter-spacing:.16em;color:var(--muted);font-weight:700}
+#q-number-value{font-size:clamp(1.5rem,7vw,2.4rem);line-height:1.2;letter-spacing:.04em}
+#q-number-status,.qnumber-note{color:var(--muted);font-size:.92rem;line-height:1.5}
+.q-turnstile{min-height:0;max-width:100%;overflow-x:auto}
+#q-number-message{min-height:1.5em;overflow-wrap:anywhere}
