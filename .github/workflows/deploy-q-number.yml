@@ -140,7 +140,7 @@ jobs:
             fi
           done
           if [[ "$rate_limited" != "1" ]]; then
-            echo "::error::Live Q# rate-limit smoke test did not observe HTTP 429 within 10 attempts."
+            echo "::error::Live Q# rate-limit smoke test did not observe HTTP 429 within 30 attempts."
             exit 1
           fi
           echo "PASS: live readiness, origin rejection, missing-token rejection, and rate limiting."
