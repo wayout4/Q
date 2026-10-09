@@ -47,5 +47,52 @@
   </nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./app.js" defer></script>
+  <script>
+    (() => {
+      "use strict";
+      let shown = false;
+      function showFatal(reason) {
+        if (shown || !document.body) return;
+        shown = true;
+        const panel = document.createElement("section");
+        panel.id = "quantum-fatal-screen";
+        panel.setAttribute("role", "alert");
+        panel.setAttribute("aria-live", "assertive");
+        panel.style.cssText = "position:fixed;inset:0;z-index:2147483647;display:grid;place-content:center;gap:16px;padding:24px;background:#10131d;color:#f2f4ff;font:16px/1.5 system-ui,sans-serif;text-align:center";
+        const title = document.createElement("h1");
+        title.textContent = "Quantum OS needs to recover";
+        title.style.cssText = "margin:0;font-size:1.5rem";
+        const detail = document.createElement("p");
+        detail.textContent = "A script or startup resource failed. Your browser may still have saved local notes. Reload to try again." + (reason ? " Details: " + String(reason).slice(0, 180) : "");
+        detail.style.cssText = "max-width:38rem;margin:0";
+        const reload = document.createElement("button");
+        reload.type = "button";
+        reload.textContent = "Reload Quantum OS";
+        reload.style.cssText = "justify-self:center;padding:12px 18px;border:0;border-radius:10px;background:#a994ff;color:#10131d;font:inherit;font-weight:700;cursor:pointer";
+        reload.addEventListener("click", () => location.reload());
+        panel.append(title, detail, reload);
+        document.body.append(panel);
+      }
+      window.addEventListener("error", event => {
+        if (event.target && event.target !== window) {
+          const src = event.target.src || event.target.href || event.target.tagName || "resource";
+          showFatal("Could not load " + src);
+        } else {
+          showFatal(event.message || "Unexpected JavaScript error");
+        }
+      }, true);
+      window.addEventListener("unhandledrejection", event => {
+        showFatal(event.reason && event.reason.message ? event.reason.message : "Unexpected asynchronous error");
+      });
+      document.addEventListener("DOMContentLoaded", () => {
+        window.setTimeout(() => {
+          if (document.documentElement.dataset.quantumBooted !== "true") {
+            showFatal("Startup did not finish");
+          }
+        }, 8000);
+      }, { once: true });
+    })();
+  </script>
+
 </body>
 </html>
