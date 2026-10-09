@@ -9,6 +9,7 @@ permissions:
 jobs:
   contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,7 +24,7 @@ jobs:
       - name: Install Playwright browser test dependency
         run: |
           npm install --no-save playwright
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Run browser end-to-end acceptance tests
         run: |
           python3 -m http.server 8080 --bind 127.0.0.1 > /tmp/quantum-os-http.log 2>&1 &
