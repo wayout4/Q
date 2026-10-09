@@ -11,13 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Validate JavaScript syntax
         run: node --check app.js
-      - name: Run acceptance contract tests
+      - name: Run static acceptance contract tests
         run: python3 -m unittest discover -s tests -v
       - name: Validate web manifest JSON
         run: python3 -m json.tool manifest.webmanifest
-      - name: Check required assets and safe relative paths
+      - name: Install Playwright browser test dependency
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Run browser end-to-end acceptance tests
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 > /tmp/quantum-os-http.log 2>&1 &
+          echo $! > /tmp/quantum-os-http.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node tests/e2e.mjs
+      - name: Check required assets and relative paths
         run: |
           test -s index.html
           test -s styles.css
