@@ -7,6 +7,7 @@ Quantum OS is a responsive, installable **web operating environment**. This repo
 - Responsive desktop and mobile layout with accessible labels and reduced-motion support.
 - Searchable app launcher and quick-launch dock.
 - Notes stored locally in the browser, with visible storage-failure handling.
+- Q# identity-registration interface with explicit API configuration, server-assigned identifiers, Turnstile bot protection, and no fabricated local number when the backend is missing. Q# is an identity handle, not a telephone service.
 - Calculator for basic arithmetic using a dedicated parser rather than dynamic code evaluation.
 - Network panel based on the browser's online/offline signal. It explicitly does not claim end-to-end internet reachability or a specific cellular generation.
 - Light/dark appearance preference.
