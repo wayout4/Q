@@ -217,4 +217,5 @@
       // Core features still work without offline caching.
     }));
   }
+  document.documentElement.dataset.quantumBooted = "true";
 })();
