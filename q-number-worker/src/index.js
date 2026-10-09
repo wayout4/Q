@@ -56,7 +56,7 @@ export default {
     }
 
     if (url.pathname === "/healthz" && request.method === "GET") {
-      const ready = Boolean(env.DB && env.TURNSTILE_SECRET && env.ALLOWED_HOSTNAME);
+      const ready = Boolean(env.DB && env.TURNSTILE_SECRET && env.ALLOWED_HOSTNAME && env.Q_NUMBER_RATE_LIMITER);
       return json({ service: "quantum-q-number", status: ready ? "ok" : "setup-required", registrationEnabled: ready }, 200, origin, env);
     }
 
@@ -64,7 +64,7 @@ export default {
       return json({ error: "Not found." }, 404, origin, env);
     }
 
-    if (!env.DB || !env.TURNSTILE_SECRET || !env.ALLOWED_HOSTNAME) {
+    if (!env.DB || !env.TURNSTILE_SECRET || !env.ALLOWED_HOSTNAME || !env.Q_NUMBER_RATE_LIMITER) {
       return json({ error: "Q# registration is not configured by the service owner yet." }, 503, origin, env);
     }
 
@@ -80,6 +80,18 @@ export default {
     if (!INSTALL_ID_RE.test(installId)) {
       return json({ error: "Invalid installation identifier. Reload Quantum OS and retry." }, 400, origin, env);
     }
+
+    // Limit verification and database work per installation. Cloudflare's limiter is
+    // intentionally approximate; Turnstile remains mandatory and is the second layer.
+    try {
+      const rate = await env.Q_NUMBER_RATE_LIMITER.limit({ key: installId });
+      if (!rate.success) {
+        return json({ error: "Too many registration attempts from this installation. Wait one minute and retry." }, 429, origin, env);
+      }
+    } catch {
+      return json({ error: "Registration protection is temporarily unavailable. Please retry shortly." }, 503, origin, env);
+    }
+
     if (!token || token.length > 4096) {
       return json({ error: "Complete the security check before requesting a Q#." }, 400, origin, env);
     }
