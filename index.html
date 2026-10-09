@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10131d">
+  <meta name="description" content="Quantum OS — a secure, responsive web operating environment.">
+  <title>Quantum OS</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="wallpaper" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Quantum OS home"><span class="brand-mark">Q</span><span>QUANTUM <b>OS</b></span></a>
+    <div class="system-status"><span id="network-dot" class="status-dot"></span><span id="network-label">Checking network…</span><span class="status-divider"></span><span id="clock">--:--</span></div>
+    <button id="quick-settings" class="icon-button" aria-label="Open settings" title="Settings">⚙</button>
+  </header>
+  <main class="workspace">
+    <section class="welcome">
+      <p class="eyebrow">PERSONAL COMPUTING, REIMAGINED</p>
+      <h1>Your space.<br><span>Your system.</span></h1>
+      <p class="welcome-copy">A responsive, offline-capable workspace built for the web today and designed to grow with tomorrow's connected devices.</p>
+      <label class="search-box"><span aria-hidden="true">⌕</span><input id="app-search" type="search" placeholder="Search apps and actions…" autocomplete="off" aria-label="Search apps and actions"><kbd>↵</kbd></label>
+    </section>
+    <section class="system-cards" aria-label="System status">
+      <article class="status-card"><div class="card-icon violet">◈</div><div><p class="card-label">SYSTEM</p><strong>Quantum Web</strong><small id="platform-label">Detecting platform</small></div></article>
+      <article class="status-card"><div class="card-icon cyan">⌁</div><div><p class="card-label">CONNECTIVITY</p><strong id="connectivity-value">Checking…</strong><small id="connectivity-detail">Network status is browser-reported</small></div></article>
+      <article class="status-card"><div class="card-icon green">◷</div><div><p class="card-label">SESSION</p><strong id="session-value">Active</strong><small>Local-first workspace</small></div></article>
+    </section>
+    <section class="apps-section">
+      <div class="section-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h2>Applications</h2></div><span id="app-count" class="count-pill">5 apps</span></div>
+      <div id="app-grid" class="app-grid">
+        <button class="app-tile" data-app="notes"><span class="app-icon icon-notes">✎</span><span>Notes</span><small>Local notes</small></button>
+        <button class="app-tile" data-app="calculator"><span class="app-icon icon-calc">＋</span><span>Calculator</span><small>Quick math</small></button>
+        <button class="app-tile" data-app="network"><span class="app-icon icon-network">⌁</span><span>Network</span><small>Connection status</small></button>
+        <button class="app-tile" data-app="settings"><span class="app-icon icon-settings">⚙</span><span>Settings</span><small>Personalize</small></button>
+        <button class="app-tile" data-app="about"><span class="app-icon icon-about">Q</span><span>About Quantum</span><small>System details</small></button>
+      </div>
+      <p id="no-results" class="empty-state" hidden>No apps match that search. Try “notes”, “network”, or “settings”.</p>
+    </section>
+    <footer class="footer"><span>QUANTUM OS <span class="muted">/ WEB EDITION</span></span><span id="footer-network">Offline-ready · Network-aware</span></footer>
+  </main>
+  <div id="window-layer" class="window-layer" aria-live="polite"></div>
+  <nav class="dock" aria-label="Quick launch">
+    <button data-app="notes" aria-label="Open Notes" title="Notes">✎</button><button data-app="calculator" aria-label="Open Calculator" title="Calculator">＋</button><button data-app="network" aria-label="Open Network" title="Network">⌁</button><button data-app="settings" aria-label="Open Settings" title="Settings">⚙</button>
+  </nav>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js" defer></script>
+</body>
+</html>
