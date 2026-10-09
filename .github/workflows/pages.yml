@@ -1,7 +1,5 @@
 name: Deploy Quantum OS Web Edition
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,11 +19,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Validate JavaScript syntax
         run: node --check app.js
-      - name: Run acceptance contract tests
+      - name: Run static acceptance tests
         run: python3 -m unittest discover -s tests -v
       - name: Validate manifest
         run: python3 -m json.tool manifest.webmanifest
