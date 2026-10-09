@@ -1,6 +1,6 @@
-const CACHE_NAME = "quantum-os-shell-v2";
+const CACHE_NAME = "quantum-os-shell-v3";
 const CACHE_PREFIX = "quantum-os-";
-const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./sw.js", "./manifest.webmanifest", "./icon.svg"];
+const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./sw.js", "./manifest.webmanifest", "./icon.svg", "./quantum-config.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(

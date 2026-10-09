@@ -8,6 +8,11 @@ page.on("pageerror", error => errors.push(error.message));
 
 try {
   await page.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" });
+  assert.equal(await page.locator(".app-tile[data-app=\"qnumber\"]").count(), 1, "Q# app tile exists");
+  await page.locator(".app-tile[data-app=\"qnumber\"]").click();
+  assert.match(await page.locator("#q-number-message").innerText(), /Setup required/);
+  assert.equal(await page.locator("#q-number-register").isDisabled(), true, "must not fabricate an offline Q#");
+  await page.locator(".window-close").click();
   assert.match(await page.title(), /Quantum OS/);
   await page.getByRole("button", { name: /Notes/ }).first().click();
   await page.locator("#notes-text").fill("Quantum acceptance test note");

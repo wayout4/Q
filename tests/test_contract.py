@@ -17,7 +17,7 @@ class QuantumOSContractTests(unittest.TestCase):
         cls.manifest = (ROOT / "manifest.webmanifest").read_text(encoding="utf-8")
 
     def test_required_application_controls_exist(self):
-        for app in ("notes", "calculator", "network", "settings", "about"):
+        for app in ("notes", "calculator", "network", "settings", "qnumber", "about"):
             self.assertIn(f'data-app="{app}"', self.html)
             self.assertIn(f"{app}:", self.js)
 
@@ -40,6 +40,7 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('"src": "./icon.svg"', self.manifest)
         self.assertIn('rel="manifest"', self.html)
         self.assertTrue((ROOT / "icon.svg").is_file())
+        self.assertTrue((ROOT / "quantum-config.js").is_file())
 
     def test_responsive_and_accessible_shell(self):
         self.assertRegex(self.css, re.compile(r"@media\s*\(max-width:\s*760px\)"))
@@ -54,6 +55,16 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('key.startsWith(CACHE_PREFIX)', self.worker)
         self.assertIn('if (fallback) return fallback', self.worker)
         self.assertIn('Quantum OS is offline', self.worker)
+
+    def test_q_number_is_server_assigned_not_fabricated(self):
+        self.assertIn('data-app="qnumber"', self.html)
+        self.assertIn('function renderQNumber(body)', self.js)
+        self.assertIn('fetch(apiBase + "/v1/q-number"', self.js)
+        self.assertIn('!/^Q# [0-9]{8}$/.test(data.qNumber)', self.js)
+        self.assertIn('Registration is not live yet.', self.js)
+        self.assertIn('carrier phone number', self.js)
+        self.assertIn('quantum-config.js', self.html)
+        self.assertIn('turnstileToken', self.js)
 
     def test_calculator_does_not_execute_dynamic_code(self):
         self.assertIn("function factor()", self.js)

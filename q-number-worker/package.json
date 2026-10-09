@@ -1,0 +1,6 @@
+{
+  "name": "quantum-q-number-worker",
+  "private": true,
+  "type": "module",
+  "description": "Quantum Q# assignment API Worker"
+}
