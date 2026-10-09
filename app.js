@@ -13,7 +13,8 @@
     calculator: { title: "Calculator", description: "Basic arithmetic with guarded expression evaluation." },
     network: { title: "Network", description: "Browser-reported connectivity status and capability limits." },
     settings: { title: "Settings", description: "Personalize this Quantum OS workspace." },
-    about: { title: "About Quantum", description: "Build identity and platform information." }
+    about: { title: "About Quantum", description: "Build identity and platform information." },
+    qnumber: { title: "My Quantum Q#", description: "Your unique Quantum identifier, separate from a carrier phone number." }
   };
 
   function notify(message) {
@@ -59,6 +60,7 @@
     else if (name === "calculator") renderCalculator(body);
     else if (name === "network") renderNetwork(body);
     else if (name === "settings") renderSettings(body);
+    else if (name === "qnumber") renderQNumber(body);
     else renderAbout(body);
 
     $(".window-close", win).focus();
@@ -165,6 +167,129 @@
       document.body.classList.toggle("light", select.value === "light");
       try { localStorage.setItem("quantum-os-theme", select.value); } catch { /* Session-only fallback. */ }
       notify("Appearance updated.");
+    });
+  }
+
+
+  function getInstallId() {
+    const key = "quantum-os-install-id";
+    try {
+      let id = localStorage.getItem(key);
+      if (!id) {
+        id = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
+          ? crypto.randomUUID()
+          : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("");
+        localStorage.setItem(key, id);
+      }
+      return id;
+    } catch {
+      return "";
+    }
+  }
+
+  function renderQNumber(body) {
+    const config = window.QUANTUM_CONFIG || {};
+    const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\\/$/, "") : "";
+    const siteKey = typeof config.turnstileSiteKey === "string" ? config.turnstileSiteKey : "";
+    let turnstileToken = "";
+    let turnstileWidget = null;
+    let busy = false;
+    let qNumber = "";
+    try { qNumber = localStorage.getItem("quantum-os-q-number") || ""; } catch { /* Session-only fallback. */ }
+    body.innerHTML = '<p>A Q# is your Quantum identity for Quantum services. It is <strong>not</strong> a carrier phone number and does not by itself provide calls, SMS, emergency calling, or mobile data.</p>' +
+      '<div class="qnumber-card" aria-live="polite"><span class="qnumber-label">YOUR QUANTUM NUMBER</span><strong id="q-number-value">Not registered</strong><span id="q-number-status">This browser has not confirmed a server-assigned Q#.</span></div>' +
+      '<p id="q-number-explainer">Registration requires the live Quantum identity API and a bot-protection check. Your number is stored on the Quantum service, not generated as a fake local number.</p>' +
+      '<div id="q-turnstile" class="q-turnstile"></div><p id="q-number-message" role="status" aria-live="polite"></p>' +
+      '<button class="primary-button" id="q-number-register" type="button" disabled>Connect to Quantum registration</button>' +
+      '<p class="qnumber-note">Current account model: one Q# per browser installation. Cross-device recovery and verified human accounts are future work; do not treat this identifier as a verified person or as a private credential.</p>';
+    const value = $("#q-number-value", body);
+    const status = $("#q-number-status", body);
+    const message = $("#q-number-message", body);
+    const button = $("#q-number-register", body);
+    const challenge = $("#q-turnstile", body);
+    function setMessage(text) { message.textContent = text; }
+    if (qNumber) {
+      value.textContent = qNumber;
+      status.textContent = "Previously server-assigned on this browser. Recheck registration to confirm it is still available.";
+    }
+    if (!apiBase || !siteKey) {
+      status.textContent = qNumber ? status.textContent : "Registration is not live yet.";
+      setMessage("Setup required: configure the Quantum API URL and public Turnstile site key in quantum-config.js, then deploy the Worker and database.");
+      button.textContent = "Registration not configured";
+      return;
+    }
+    const installId = getInstallId();
+    if (!installId) {
+      setMessage("Browser storage is blocked. Enable site storage and reload to create a stable installation ID.");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "Waiting for security check…";
+    function enableIfReady() {
+      button.disabled = !turnstileToken || busy;
+      button.textContent = busy ? "Registering…" : "Assign my Q#";
+    }
+    function loadTurnstile() {
+      if (window.turnstile) { mountTurnstile(); return; }
+      const existing = document.querySelector('script[data-quantum-turnstile]');
+      if (existing) { existing.addEventListener("load", mountTurnstile, { once: true }); return; }
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      script.dataset.quantumTurnstile = "true";
+      script.addEventListener("load", mountTurnstile, { once: true });
+      script.addEventListener("error", () => {
+        setMessage("Security check could not load. Check your connection or content blocker and retry.");
+        button.disabled = true;
+      }, { once: true });
+      document.head.append(script);
+    }
+    function mountTurnstile() {
+      if (!window.turnstile || !challenge.isConnected || turnstileWidget !== null) return;
+      try {
+        turnstileWidget = window.turnstile.render(challenge, {
+          sitekey: siteKey,
+          callback: token => { turnstileToken = token; enableIfReady(); },
+          "expired-callback": () => { turnstileToken = ""; enableIfReady(); },
+          "error-callback": () => { turnstileToken = ""; enableIfReady(); setMessage("Security check failed to load. Retry the check."); }
+        });
+        setMessage("Complete the security check to request a server-assigned Q#.");
+      } catch {
+        setMessage("Security check could not start. Close and reopen My Q# to retry.");
+      }
+    }
+    loadTurnstile();
+    button.addEventListener("click", async () => {
+      if (busy || !turnstileToken) return;
+      busy = true; enableIfReady(); setMessage("Contacting Quantum registration…");
+      try {
+        const response = await fetch(apiBase + "/v1/q-number", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ installId, turnstileToken })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Registration service returned HTTP " + response.status);
+        if (typeof data.qNumber !== "string" || !/^Q# [0-9]{8}$/.test(data.qNumber)) {
+          throw new Error("The service returned an invalid Q# response.");
+        }
+        qNumber = data.qNumber;
+        value.textContent = qNumber;
+        status.textContent = "Server-assigned and confirmed for this browser installation.";
+        try { localStorage.setItem("quantum-os-q-number", qNumber); } catch { /* Show the confirmed number for this session. */ }
+        setMessage("Your Q# is assigned. Save it somewhere safe; account recovery is not yet available.");
+        if (window.turnstile && turnstileWidget !== null) window.turnstile.reset(turnstileWidget);
+        turnstileToken = "";
+      } catch (error) {
+        setMessage((error && error.message ? error.message : "Registration failed") + " Nothing was registered locally as a substitute. Retry when the service is available.");
+        if (window.turnstile && turnstileWidget !== null) {
+          try { window.turnstile.reset(turnstileWidget); } catch { /* User can close and reopen the panel. */ }
+        }
+        turnstileToken = "";
+      } finally {
+        busy = false; enableIfReady();
+      }
     });
   }
 
