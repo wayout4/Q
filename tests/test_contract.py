@@ -47,6 +47,14 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('aria-live="polite"', self.html)
         self.assertIn("prefers-reduced-motion", self.css)
 
+    def test_runtime_recovery_and_cache_safety(self):
+        self.assertIn('panel.id = "quantum-fatal-screen"', self.html)
+        self.assertIn('dataset.quantumBooted !== "true"', self.html)
+        self.assertIn('dataset.quantumBooted = "true"', self.js)
+        self.assertIn('key.startsWith(CACHE_PREFIX)', self.worker)
+        self.assertIn('if (fallback) return fallback', self.worker)
+        self.assertIn('Quantum OS is offline', self.worker)
+
     def test_calculator_does_not_execute_dynamic_code(self):
         self.assertIn("function factor()", self.js)
         self.assertIn("function term()", self.js)
