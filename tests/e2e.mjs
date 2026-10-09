@@ -13,7 +13,7 @@ try {
   await page.locator("#notes-text").fill("Quantum acceptance test note");
   await page.getByRole("button", { name: "Save note" }).click();
   await page.locator(".window-close").click();
-  await page.locator('[data-app="notes"]').click();
+  await page.locator('.app-tile[data-app="notes"]').click();
   assert.equal(await page.locator("#notes-text").inputValue(), "Quantum acceptance test note");
   await page.locator(".window-close").click();
 
