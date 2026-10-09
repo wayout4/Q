@@ -1,0 +1,42 @@
+name: Quantum OS acceptance checks
+on:
+  push:
+    branches: [main, quantum-os-foundation]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JavaScript syntax
+        run: node --check app.js
+      - name: Run acceptance contract tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate web manifest JSON
+        run: python3 -m json.tool manifest.webmanifest
+      - name: Check required assets and safe relative paths
+        run: |
+          test -s index.html
+          test -s styles.css
+          test -s app.js
+          test -s sw.js
+          grep -q 'href="./styles.css"' index.html
+          grep -q 'src="./app.js"' index.html
+          grep -q 'navigator.onLine' app.js
+      - name: Package static web app
+        run: |
+          mkdir -p dist
+          cp index.html styles.css app.js sw.js manifest.webmanifest dist/
+          cp README.md dist/
+          (cd dist && sha256sum index.html styles.css app.js sw.js manifest.webmanifest > SHA256SUMS)
+          (cd dist && sha256sum -c SHA256SUMS)
+      - name: Upload verified web package
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantum-os-web
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
