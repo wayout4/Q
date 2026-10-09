@@ -35,8 +35,11 @@ class QuantumOSContractTests(unittest.TestCase):
     def test_offline_shell_and_manifest_are_present(self):
         self.assertIn("serviceWorker", self.js)
         self.assertIn('caches.open(CACHE_NAME)', self.worker)
+        self.assertIn("./icon.svg", self.worker)
         self.assertIn('"display": "standalone"', self.manifest)
+        self.assertIn('"src": "./icon.svg"', self.manifest)
         self.assertIn('rel="manifest"', self.html)
+        self.assertTrue((ROOT / "icon.svg").is_file())
 
     def test_responsive_and_accessible_shell(self):
         self.assertRegex(self.css, re.compile(r"@media\s*\(max-width:\s*760px\)"))
@@ -44,10 +47,16 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('aria-live="polite"', self.html)
         self.assertIn("prefers-reduced-motion", self.css)
 
+    def test_calculator_does_not_execute_dynamic_code(self):
+        self.assertIn("function factor()", self.js)
+        self.assertIn("function term()", self.js)
+        self.assertIn("function sum()", self.js)
+        self.assertNotIn("Function(", self.js)
+
     def test_no_fake_native_os_or_6g_claims(self):
         self.assertIn("not a replacement kernel", self.js)
         self.assertIn("Not claimed", self.js)
-        self.assertNotIn("guaranteed 6G", (ROOT / "README.md").read_text(encoding="utf-8").lower())
+        self.assertNotIn("guaranteed 6g", (ROOT / "README.md").read_text(encoding="utf-8").lower())
 
 
 if __name__ == "__main__":
