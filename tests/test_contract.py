@@ -60,7 +60,7 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('data-app="qnumber"', self.html)
         self.assertIn('function renderQNumber(body)', self.js)
         self.assertIn('fetch(apiBase + "/v1/q-number"', self.js)
-        self.assertIn('!/^Q# [0-9]{8}$/.test(data.qNumber)', self.js)
+        self.assertIn('!/^Q# [0-9]{8,}$/.test(data.qNumber)', self.js)
         self.assertIn('Registration is not live yet.', self.js)
         self.assertIn('carrier phone number', self.js)
         self.assertIn('quantum-config.js', self.html)
