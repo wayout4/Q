@@ -7,6 +7,7 @@ const env = {
   ALLOWED_ORIGIN: origin,
   ALLOWED_HOSTNAME: "wayout4.github.io",
   TURNSTILE_SECRET: "test-secret",
+  Q_NUMBER_RATE_LIMITER: { async limit() { return { success: true }; } },
   DB: null
 };
 
@@ -82,7 +83,19 @@ test("rejects disallowed origins and invalid installation IDs", async () => {
   }
 });
 
-test("fails closed when Turnstile or database configuration is missing", async () => {
+test("rate limits repeated registration attempts before external verification", async () => {
+  const oldFetch = globalThis.fetch;
+  let verifications = 0;
+  globalThis.fetch = async () => { verifications++; return new Response(JSON.stringify({ success: true, hostname: "wayout4.github.io" }), { status: 200 }); };
+  try {
+    const config = { ...env, DB: makeDb(), Q_NUMBER_RATE_LIMITER: { async limit() { return { success: false }; } } };
+    const response = await worker.fetch(request("/v1/q-number", { installId: "12345678-1234-1234-1234-123456789abc", turnstileToken: "valid-token" }), config);
+    assert.equal(response.status, 429);
+    assert.equal(verifications, 0, "rate limiting must happen before Turnstile network verification");
+  } finally { globalThis.fetch = oldFetch; }
+});
+
+test("fails closed when Turnstile, database, or rate limiting configuration is missing", async () => {
   const response = await worker.fetch(request("/v1/q-number", { installId: "12345678-1234-1234-1234-123456789abc", turnstileToken: "x" }), { ALLOWED_ORIGIN: origin, ALLOWED_HOSTNAME: "wayout4.github.io" });
   assert.equal(response.status, 503);
   assert.match((await response.json()).error, /not configured/i);
