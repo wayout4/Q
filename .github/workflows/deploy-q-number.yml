@@ -26,7 +26,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '2af66de76fa7bf059ed37b9da263c0d8' }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CF_API: https://api.cloudflare.com/client/v4
       SITE_ORIGIN: https://wayout4.github.io
@@ -44,8 +44,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${CLOUDFLARE_ACCOUNT_ID}" || -z "${CLOUDFLARE_API_TOKEN}" ]]; then
-            echo "::error::Add repository Actions secrets CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN, then rerun this workflow."
+          if [[ -z "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
+            echo "::error::Cloudflare account ID is missing. Set CLOUDFLARE_ACCOUNT_ID or update the workflow fallback."
+            exit 1
+          fi
+          if [[ -z "${CLOUDFLARE_API_TOKEN}" ]]; then
+            echo "::error::Missing repository Actions secret CLOUDFLARE_API_TOKEN. Create a scoped Cloudflare API token and save it in GitHub Settings > Secrets and variables > Actions."
             exit 1
           fi
 
