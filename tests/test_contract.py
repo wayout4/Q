@@ -48,7 +48,7 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn("prefers-reduced-motion", self.css)
 
     def test_runtime_recovery_and_cache_safety(self):
-        self.assertIn('id="quantum-fatal-screen"', self.html)
+        self.assertIn('panel.id = "quantum-fatal-screen"', self.html)
         self.assertIn('dataset.quantumBooted !== "true"', self.html)
         self.assertIn('dataset.quantumBooted = "true"', self.js)
         self.assertIn('key.startsWith(CACHE_PREFIX)', self.worker)
