@@ -17,18 +17,18 @@ try {
   assert.equal(await page.locator("#notes-text").inputValue(), "Quantum acceptance test note");
   await page.locator(".window-close").click();
 
-  await page.locator('[data-app="calculator"]').click();
+  await page.locator('.app-tile[data-app="calculator"]').click();
   for (const key of ["1", "+", "2", "="]) {
     await page.locator('[data-key="' + key + '"]').click();
   }
   assert.equal(await page.locator("#calc-display").innerText(), "3");
   await page.locator(".window-close").click();
 
-  await page.locator('[data-app="network"]').click();
+  await page.locator('.app-tile[data-app="network"]').click();
   assert.match(await page.locator(".window-body").innerText(), /Not verified/);
   await page.locator(".window-close").click();
 
-  await page.locator('[data-app="settings"]').click();
+  await page.locator('.app-tile[data-app="settings"]').click();
   await page.locator("#theme-select").selectOption("light");
   await page.getByRole("button", { name: "Apply appearance" }).click();
   assert.equal(await page.locator("body").evaluate(el => el.classList.contains("light")), true);
