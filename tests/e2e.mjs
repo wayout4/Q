@@ -39,9 +39,11 @@ try {
   assert.equal(await page.locator("#no-results").isVisible(), true);
   await page.locator("#app-search").fill("");
 
-  await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(await page.locator("body").evaluate(el => el.scrollWidth <= window.innerWidth), true,
-    "mobile viewport must not have horizontal page overflow");
+  for (const width of [320, 360, 375, 390, 430, 768, 1024, 1365]) {
+    await page.setViewportSize({ width, height: 844 });
+    assert.equal(await page.locator("body").evaluate(el => el.scrollWidth <= window.innerWidth), true,
+      `viewport ${width}px must not have horizontal page overflow`);
+  }
 
   await page.context().setOffline(true);
   await page.waitForTimeout(150);
@@ -49,7 +51,17 @@ try {
   await page.context().setOffline(false);
 
   assert.deepEqual(errors, [], "no uncaught browser JavaScript errors");
-  console.log("PASS: launch, note persistence, calculator, network honesty, settings, search, mobile layout, offline transition, no page errors");
+  assert.equal(await page.locator("html").getAttribute("data-quantum-booted"), "true",
+    "startup marker must be present after app initialization");
+
+  await page.evaluate(() => window.dispatchEvent(new ErrorEvent("error", { message: "synthetic recovery test" })));
+  assert.equal(await page.locator("#quantum-fatal-screen").isVisible(), true,
+    "fatal runtime errors must show a visible recovery screen");
+  await page.locator("#quantum-fatal-screen button").click();
+  await page.waitForLoadState("networkidle");
+  assert.equal(await page.locator("html").getAttribute("data-quantum-booted"), "true",
+    "reload recovery must return to a booted app");
+  console.log("PASS: launch, note persistence, calculator, network honesty, settings, search, 8 viewport widths, offline transition, fatal-error recovery, reload recovery, no uncaught browser errors");
 } finally {
   await browser.close();
 }
