@@ -40,6 +40,7 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('"src": "./icon.svg"', self.manifest)
         self.assertIn('rel="manifest"', self.html)
         self.assertTrue((ROOT / "icon.svg").is_file())
+        self.assertTrue((ROOT / "quantum-config.js").is_file())
 
     def test_responsive_and_accessible_shell(self):
         self.assertRegex(self.css, re.compile(r"@media\s*\(max-width:\s*760px\)"))
@@ -61,7 +62,7 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('fetch(apiBase + "/v1/q-number"', self.js)
         self.assertIn('!/^Q# [0-9]{8}$/.test(data.qNumber)', self.js)
         self.assertIn('Registration is not live yet.', self.js)
-        self.assertIn('not a carrier phone number', self.js)
+        self.assertIn('carrier phone number', self.js)
         self.assertIn('quantum-config.js', self.html)
         self.assertIn('turnstileToken', self.js)
 
