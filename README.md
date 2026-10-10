@@ -120,3 +120,8 @@ To enable it without Cloudflare:
 4. Verify the artifact's `execution` value is `real-qpu` and use its backend name and job ID to cross-check the job in the IBM Quantum Platform dashboard.
 
 This is a real hardware execution path, not an already-connected always-on service. It will not run until valid provider credentials, an authorized instance, available hardware, and any required quota are configured. The GitHub Pages browser app cannot safely hold a private quantum-provider key, so this workflow is a secure server-side execution route rather than a direct browser-to-QPU connection. It does not make the project a 6G network or create carrier infrastructure.
+
+
+## Beyond-6G product architecture
+
+Q's forward-looking AI-native, multi-access architecture, differentiation targets, conformance gates, and staged implementation roadmap are documented in [Q Beyond-6G Network Architecture](./infrastructure/Q-BEYOND-6G-ARCHITECTURE.md). This is a research/product architecture, not a claim of deployed 6G or 8G radio capability.
