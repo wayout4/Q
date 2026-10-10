@@ -23,7 +23,7 @@ jobs:
         run: python -m pip install -r qpu/requirements.txt
       - name: Submit and wait for real QPU execution
         env:
-          IBM_QUANTUM_API_KEY: ${{ secrets.IBM_QUANTUM_API_KEY }}
+          IBM_QUANTUM_API_KEY: ${{ secrets.IBM_QUANTUM_API_KEY || secrets.IBM_API_KEY }}
           IBM_QUANTUM_INSTANCE: ${{ secrets.IBM_QUANTUM_INSTANCE }}
         run: python qpu/run_on_hardware.py
       - name: Upload real hardware result
