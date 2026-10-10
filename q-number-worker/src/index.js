@@ -1,7 +1,7 @@
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 const INSTALL_ID_RE = /^[a-f0-9-]{32,36}$/i;
 const CLIENT_TOKEN_RE = /^[A-Za-z0-9_-]{43,128}$/;
-const Q_NUMBER_RE = /^([1-9][0-9]*)\\.00000000$/;
+const Q_NUMBER_RE = /^([1-9][0-9]*)\.00000000$/;
 const MAX_MESSAGE_LENGTH = 4000;
 
 function json(data, status, origin, env) {
