@@ -14,7 +14,8 @@
     network: { title: "Network", description: "Browser-reported connectivity status and capability limits." },
     settings: { title: "Settings", description: "Personalize this Quantum OS workspace." },
     about: { title: "About Quantum", description: "Build identity and platform information." },
-    qnumber: { title: "My Quantum Q#", description: "Your unique Quantum identifier, separate from a carrier phone number." }
+    qnumber: { title: "My Quantum Q#", description: "Your unique Quantum identifier, separate from a carrier phone number." },
+    messages: { title: "Quantum Messages", description: "Send and receive messages using Quantum Q# identities." }
   };
 
   function notify(message) {
@@ -61,6 +62,7 @@
     else if (name === "network") renderNetwork(body);
     else if (name === "settings") renderSettings(body);
     else if (name === "qnumber") renderQNumber(body);
+    else if (name === "messages") renderMessages(body);
     else renderAbout(body);
 
     $(".window-close", win).focus();
@@ -187,6 +189,20 @@
     }
   }
 
+  function getClientToken() {
+    const key = "quantum-os-client-token";
+    try {
+      let token = localStorage.getItem(key);
+      if (!token) {
+        token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("");
+        localStorage.setItem(key, token);
+      }
+      return token;
+    } catch {
+      return "";
+    }
+  }
+
   function renderQNumber(body) {
     const config = window.QUANTUM_CONFIG || {};
     const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\/$/, "") : "";
@@ -219,7 +235,8 @@
       return;
     }
     const installId = getInstallId();
-    if (!installId) {
+    const clientToken = getClientToken();
+    if (!installId || !clientToken) {
       setMessage("Browser storage is blocked. Enable site storage and reload to create a stable installation ID.");
       return;
     }
@@ -267,11 +284,11 @@
         const response = await fetch(apiBase + "/v1/q-number", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ installId, turnstileToken })
+          body: JSON.stringify({ installId, turnstileToken, clientToken })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Registration service returned HTTP " + response.status);
-        if (typeof data.qNumber !== "string" || !/^Q# [0-9]{8,}$/.test(data.qNumber)) {
+        if (typeof data.qNumber !== "string" || !/^[1-9][0-9]*\\.00000000$/.test(data.qNumber)) {
           throw new Error("The service returned an invalid Q# response.");
         }
         qNumber = data.qNumber;
@@ -291,6 +308,80 @@
         busy = false; enableIfReady();
       }
     });
+  }
+
+  function renderMessages(body) {
+    const config = window.QUANTUM_CONFIG || {};
+    const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\\/$/, "") : "";
+    const token = getClientToken();
+    let after = 0;
+    body.innerHTML = '<p>Message another Quantum user by their Q#. Messages use HTTPS in transit and are stored by the service. <strong>This release is not end-to-end encrypted.</strong> Do not send sensitive information.</p>' +
+      '<label for="message-recipient">Recipient Q#</label><input id="message-recipient" inputmode="decimal" placeholder="e.g. 2.00000000" autocomplete="off" maxlength="40">' +
+      '<label for="message-body">Message</label><textarea id="message-body" maxlength="4000" rows="4" placeholder="Write a message…"></textarea>' +
+      '<button class="primary-button" id="message-send" type="button">Send message</button> <button class="secondary-button" id="message-refresh" type="button">Refresh inbox</button>' +
+      '<p id="message-status" role="status" aria-live="polite"></p><h4>Inbox</h4><div id="message-inbox" class="info-list"></div>';
+    const status = $("#message-status", body);
+    const recipient = $("#message-recipient", body);
+    const messageBody = $("#message-body", body);
+    const inbox = $("#message-inbox", body);
+    const send = $("#message-send", body);
+    const refresh = $("#message-refresh", body);
+    const qNumber = (() => { try { return localStorage.getItem("quantum-os-q-number") || ""; } catch { return ""; } })();
+    if (!apiBase || !token) {
+      status.textContent = "Messaging setup is not available. Configure the live API and enable browser storage.";
+      send.disabled = true; refresh.disabled = true; return;
+    }
+    if (!qNumber) {
+      status.textContent = "Register this browser in My Q# before sending or receiving messages.";
+      send.disabled = true; refresh.disabled = true; return;
+    }
+    async function api(path, options = {}) {
+      const response = await fetch(apiBase + path, {
+        ...options,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...(options.headers || {}) }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Quantum API returned HTTP " + response.status);
+      return data;
+    }
+    async function loadInbox() {
+      refresh.disabled = true;
+      try {
+        const data = await api("/v1/messages?after=" + after, { method: "GET", headers: {} });
+        if (after === 0) inbox.replaceChildren();
+        for (const item of data.messages || []) {
+          const card = document.createElement("article");
+          card.className = "message-item";
+          const heading = document.createElement("strong");
+          heading.textContent = "From " + item.fromQNumber;
+          const timestamp = document.createElement("small");
+          timestamp.textContent = item.createdAt ? new Date(item.createdAt).toLocaleString() : "";
+          const text = document.createElement("p");
+          text.textContent = item.body || "";
+          card.append(heading, timestamp, text);
+          inbox.append(card);
+        }
+        after = Math.max(after, Number(data.nextAfter) || after);
+        status.textContent = (data.messages || []).length ? "Inbox refreshed." : "No new messages.";
+      } catch (error) {
+        status.textContent = error.message || "Could not load inbox.";
+      } finally { refresh.disabled = false; }
+    }
+    send.addEventListener("click", async () => {
+      const toQNumber = recipient.value.trim();
+      const bodyText = messageBody.value.trim();
+      if (!toQNumber || !bodyText) { status.textContent = "Enter a recipient Q# and a message."; return; }
+      send.disabled = true;
+      try {
+        await api("/v1/messages", { method: "POST", body: JSON.stringify({ toQNumber, body: bodyText }) });
+        messageBody.value = "";
+        status.textContent = "Message sent to " + toQNumber + ".";
+      } catch (error) {
+        status.textContent = error.message || "Message could not be sent.";
+      } finally { send.disabled = false; }
+    });
+    refresh.addEventListener("click", loadInbox);
+    loadInbox();
   }
 
   function renderAbout(body) {
