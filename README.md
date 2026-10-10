@@ -86,3 +86,16 @@ Every successful CI run uploads a `quantum-os-web` artifact with the static appl
 - No user accounts, cloud synchronization, app store, kernel, drivers, or privileged device controls are implemented.
 - Service-worker support requires HTTPS or localhost.
 - Static tests do not substitute for browser E2E, accessibility audits, or physical-device verification.
+
+## Real quantum hardware (no simulator fallback)
+
+QOS now includes an opt-in IBM Quantum Platform hardware job in `qpu/`. It submits a two-qubit Bell-state circuit to an operational, non-simulator QPU, waits for the provider result, and emits a report containing the hardware backend name, provider job ID, shot count, and measured counts. The job fails closed if credentials or hardware access are missing; it never substitutes the local Quantum Lab simulator.
+
+To enable it without Cloudflare:
+
+1. Create/authorize an IBM Quantum Platform account and API key, and confirm access to a Quantum Compute instance and QPU quota. IBM's official setup guide: https://quantum.cloud.ibm.com/docs/en/guides/cloud-setup-rest-api
+2. In this GitHub repository, open **Settings → Secrets and variables → Actions**. Add secret `IBM_QUANTUM_API_KEY`; optionally add `IBM_QUANTUM_INSTANCE` as a repository variable/secret containing the instance CRN if your account requires it. Never paste credentials into chat, source files, or workflow logs.
+3. Open **Actions → Run real quantum hardware job → Run workflow**. The workflow installs Qiskit, submits a job to a real provider QPU, and uploads `qos-real-quantum-hardware-result` if the job completes.
+4. Verify the artifact's `execution` value is `real-qpu` and use its backend name and job ID to cross-check the job in the IBM Quantum Platform dashboard.
+
+This is a real hardware execution path, not an already-connected always-on service. It will not run until valid provider credentials, an authorized instance, available hardware, and any required quota are configured. The GitHub Pages browser app cannot safely hold a private quantum-provider key, so this workflow is a secure server-side execution route rather than a direct browser-to-QPU connection. It does not make the project a 6G network or create carrier infrastructure.
