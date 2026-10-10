@@ -96,7 +96,7 @@
     const result = circuit.snapshot();
     const distribution = Array(1 << qubits).fill(0);
     for (const item of result.state) {
-      const input = parseInt(item.basis.slice(0, qubits), 2);
+      const input = parseInt(item.basis.slice(-qubits), 2);
       distribution[input] += item.probability;
     }
     return { oracle, qubits, distribution, measuredInput: distribution.reduce((best, p, i, arr) => p > arr[best] ? i : best, 0), circuit: result };
