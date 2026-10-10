@@ -159,7 +159,7 @@
 
   function renderNetwork(body) {
     const online = navigator.onLine;
-    body.innerHTML = '<p>This panel separates browser reachability hints from verified radio information. It never guesses a cellular generation.</p>' +
+    body.innerHTML = '<p>This panel separates browser reachability hints from verified radio information. Browser online status does not guarantee internet or service reachability. It never guesses a cellular generation.</p>' +
       '<div class="info-list"><span>Browser connectivity</span><strong>' + (online ? "Online" : "Offline") + '</strong>' +
       '<span>Radio access technology</span><strong id="qos-rat">Checking…</strong>' +
       '<span>Signal source</span><strong id="qos-rat-source">Checking…</strong>' +
