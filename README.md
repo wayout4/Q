@@ -50,8 +50,11 @@ The current CI provides static contract checks and packaging validation. It does
 
 ## Connectivity and 6G
 
-Quantum OS uses the connectivity exposed by its host browser and device. `navigator.onLine` is only a browser hint; it does not prove a remote service is reachable. This project does not implement a cellular modem, carrier integration, 5G/6G radio access, or a native network stack. Future 6G readiness would require real standards-based platform integrations and compatible hardware/service; no live 6G support is claimed.
+QOS uses the connectivity exposed by its host browser/device. `navigator.onLine` is only a browser hint and does not prove remote service reachability. The web app cannot read or control all cellular radio details and does not implement a cellular modem, carrier core, or 5G/6G radio access.
 
+The new `connectivity/rat-capability.js` adapter reports browser-visible hints without guessing whether a connection is 3G, LTE, 5G NSA, or 5G SA. A future native host can implement `window.QOSNativeConnectivity.getSnapshot()` using supported Android/iOS APIs and permissions. The Network panel clearly identifies the source and reports unsupported fields as unknown.
+
+See [the multi-RAT and IMT-2030 architecture](connectivity/6g-interoperability-architecture.md) for web/native boundaries, transport resilience, carrier integration requirements, security/privacy rules, and release gates. The architecture is a roadmap and interface contract—not evidence of native modem access, carrier certification, or live 6G service.
 ## Privacy and storage
 
 Notes and appearance preferences are stored in the current browser profile. They are not synced to a cloud account. Clearing browser site data may remove them. This build does not request location, microphone, contacts, or other device permissions.
