@@ -95,7 +95,7 @@
     for (let q = 0; q < qubits; q++) circuit.h(q);
     const result = circuit.snapshot();
     const distribution = Array(1 << qubits).fill(0);
-    for (const item of result.state) if (item.basis.endsWith("1")) {
+    for (const item of result.state) {
       const input = parseInt(item.basis.slice(0, qubits), 2);
       distribution[input] += item.probability;
     }
