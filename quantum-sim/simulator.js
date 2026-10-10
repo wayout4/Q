@@ -89,7 +89,7 @@
     if (!Number.isInteger(qubits) || qubits < 1 || qubits >= MAX_QUBITS) throw new RangeError("Deutsch-Jozsa input qubits must be from 1 to " + (MAX_QUBITS - 1));
     if (oracle !== "constant" && oracle !== "balanced") throw new TypeError("oracle must be constant or balanced");
     const circuit = createCircuit(qubits + 1);
-    for (let q = 0; q <= qubits; q++) circuit.x(q);
+    circuit.x(qubits);
     for (let q = 0; q <= qubits; q++) circuit.h(q);
     if (oracle === "balanced") for (let q = 0; q < qubits; q++) circuit.cnot(q, qubits);
     for (let q = 0; q < qubits; q++) circuit.h(q);
