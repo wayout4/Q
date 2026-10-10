@@ -6,7 +6,7 @@
 (() => {
   "use strict";
 
-  const SUPPORTED_RATS = Object.freeze(["2G", "3G", "4G/LTE", "5G NSA", "5G SA", "Wi-Fi", "Satellite", "Unknown"]);
+  const SUPPORTED_RATS = Object.freeze(["2G", "3G", "4G/LTE", "5G NSA", "5G SA", "5G NR (SA/NSA unknown)", "Wi-Fi", "Satellite", "Unknown"]);
 
   function browserSnapshot() {
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
