@@ -395,7 +395,7 @@
       '<div class="quantum-controls"><label for="quantum-qubits">Qubits</label><select id="quantum-qubits"><option value="1">1 qubit</option><option value="2" selected>2 qubits</option><option value="3">3 qubits</option><option value="4">4 qubits</option><option value="5">5 qubits</option><option value="6">6 qubits</option><option value="7">7 qubits</option><option value="8">8 qubits</option><option value="9">9 qubits</option><option value="10">10 qubits</option></select>' +
       '<label for="quantum-gate">Gate</label><select id="quantum-gate"><option>H</option><option>X</option><option>Y</option><option>Z</option><option>S</option><option>T</option><option>CNOT</option></select>' +
       '<label for="quantum-target">Target qubit</label><select id="quantum-target"><option value="0">Qubit 0</option><option value="1">Qubit 1</option></select>' +
-      '<button class="primary-button" id="quantum-apply">Apply gate</button><button class="secondary-button" id="quantum-bell">Bell pair demo</button><button class="secondary-button" id="quantum-measure">Measure</button><button class="secondary-button" id="quantum-reset">Reset</button></div>' +
+      '<button class="primary-button" id="quantum-apply">Apply gate</button><button class="secondary-button" id="quantum-bell">Bell pair demo</button><button class="secondary-button" id="quantum-dj">Deutsch–Jozsa demo</button><button class="secondary-button" id="quantum-measure">Measure</button><button class="secondary-button" id="quantum-reset">Reset</button></div>' +
       '<p id="quantum-status" role="status">Ready. Basis states are shown as |q(n-1)…q0⟩.</p><div id="quantum-state" class="quantum-state"></div><h4>Circuit history</h4><ol id="quantum-history" class="quantum-history"></ol>';
     const $q = selector => $(selector, body);
     let circuit = window.QuantumSimulator.createCircuit(2);
@@ -447,6 +447,11 @@
       circuit = window.QuantumSimulator.bellState();
       render();
       $q("#quantum-status").textContent = "Bell pair prepared: |00⟩ and |11⟩ each have 50% probability.";
+    });
+    $q("#quantum-dj").addEventListener("click", () => {
+      const result = window.QuantumSimulator.deutschJozsa({ qubits: 3, oracle: "balanced" });
+      const output = result.measuredInput.toString(2).padStart(result.qubits, "0");
+      $q("#quantum-status").textContent = "Deutsch–Jozsa · balanced oracle · deterministic simulated input result |" + output + "⟩. Distribution: " + result.distribution.map((p, i) => i.toString(2).padStart(result.qubits, "0") + "=" + (p * 100).toFixed(1) + "%").join(", ");
     });
     $q("#quantum-measure").addEventListener("click", () => {
       const result = circuit.measure();
