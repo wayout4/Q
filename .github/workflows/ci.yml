@@ -21,8 +21,11 @@ jobs:
           node --check quantum-config.js
           node --check q-number-worker/src/index.js
           node --check oeql/runtime.mjs
+          node --check quantum-sim/simulator.js
       - name: Run static acceptance contract tests
         run: python3 -m unittest discover -s tests -v
+      - name: Test quantum state-vector simulator
+        run: node --test quantum-sim/simulator.test.mjs
       - name: Test OEQL runtime
         run: node --test oeql/runtime.test.mjs
       - name: Test Q# assignment API
@@ -49,6 +52,7 @@ jobs:
           test -s immersive.css
           test -s app.js
           test -s quantum-config.js
+          test -s quantum-sim/simulator.js
           test -s q-number-worker/src/index.js
           test -s sw.js
           test -s icon.svg
@@ -56,12 +60,14 @@ jobs:
           grep -q 'href="./immersive.css"' index.html
           grep -q 'src="./app.js"' index.html
           grep -q 'src="./quantum-config.js"' index.html
+          grep -q 'src="./quantum-sim/simulator.js"' index.html
           grep -q 'navigator.onLine' app.js
       - name: Package static web app
         run: |
           mkdir -p dist
           cp index.html styles.css immersive.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js README.md dist/
-          (cd dist && sha256sum index.html styles.css immersive.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js > SHA256SUMS)
+          cp -R quantum-sim oeql dist/
+          (cd dist && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           (cd dist && sha256sum -c SHA256SUMS)
       - name: Upload verified web package
         uses: actions/upload-artifact@v4
