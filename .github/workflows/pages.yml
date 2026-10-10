@@ -48,9 +48,9 @@ jobs:
       - name: Assemble public site
         run: |
           mkdir -p dist
-          cp index.html styles.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js dist/
+          cp index.html styles.css immersive.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js dist/
           cp README.md dist/ABOUT.md
-          (cd dist && sha256sum index.html styles.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js > SHA256SUMS)
+          (cd dist && sha256sum index.html styles.css immersive.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js > SHA256SUMS)
           (cd dist && sha256sum -c SHA256SUMS)
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
