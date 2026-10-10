@@ -15,7 +15,8 @@
     settings: { title: "Settings", description: "Personalize this Quantum OS workspace." },
     about: { title: "About Quantum", description: "Build identity and platform information." },
     qnumber: { title: "My Quantum Q#", description: "Your unique Quantum identifier, separate from a carrier phone number." },
-    messages: { title: "Quantum Messages", description: "Send and receive messages using Quantum Q# identities." }
+    messages: { title: "Quantum Messages", description: "Send and receive messages using Quantum Q# identities." },
+    quantum: { title: "Quantum Lab", description: "A browser-based state-vector simulator for small quantum circuits." }
   };
 
   function notify(message) {
@@ -63,6 +64,7 @@
     else if (name === "settings") renderSettings(body);
     else if (name === "qnumber") renderQNumber(body);
     else if (name === "messages") renderMessages(body);
+    else if (name === "quantum") renderQuantumLab(body);
     else renderAbout(body);
 
     $(".window-close", win).focus();
@@ -382,6 +384,77 @@
     });
     refresh.addEventListener("click", loadInbox);
     loadInbox();
+  }
+
+  function renderQuantumLab(body) {
+    if (!window.QuantumSimulator) {
+      body.textContent = "Quantum simulator failed to load. Reload Quantum OS and try again.";
+      return;
+    }
+    body.innerHTML = '<p>This is a classical state-vector simulation of quantum circuits, not quantum hardware. State-vector memory grows exponentially, so this lab is limited to 10 qubits.</p>' +
+      '<div class="quantum-controls"><label for="quantum-qubits">Qubits</label><select id="quantum-qubits"><option value="1">1 qubit</option><option value="2" selected>2 qubits</option><option value="3">3 qubits</option><option value="4">4 qubits</option><option value="5">5 qubits</option><option value="6">6 qubits</option><option value="7">7 qubits</option><option value="8">8 qubits</option><option value="9">9 qubits</option><option value="10">10 qubits</option></select>' +
+      '<label for="quantum-gate">Gate</label><select id="quantum-gate"><option>H</option><option>X</option><option>Y</option><option>Z</option><option>S</option><option>T</option><option>CNOT</option></select>' +
+      '<label for="quantum-target">Target qubit</label><select id="quantum-target"><option value="0">Qubit 0</option><option value="1">Qubit 1</option></select>' +
+      '<button class="primary-button" id="quantum-apply">Apply gate</button><button class="secondary-button" id="quantum-bell">Bell pair demo</button><button class="secondary-button" id="quantum-measure">Measure</button><button class="secondary-button" id="quantum-reset">Reset</button></div>' +
+      '<p id="quantum-status" role="status">Ready. Basis states are shown as |q(n-1)…q0⟩.</p><div id="quantum-state" class="quantum-state"></div><h4>Circuit history</h4><ol id="quantum-history" class="quantum-history"></ol>';
+    const $q = selector => $(selector, body);
+    let circuit = window.QuantumSimulator.createCircuit(2);
+    function render() {
+      const snap = circuit.snapshot();
+      $q("#quantum-state").replaceChildren();
+      for (const item of snap.state) {
+        const row = document.createElement("div");
+        row.className = "quantum-state-row";
+        const label = document.createElement("span");
+        label.textContent = "|" + item.basis + "⟩";
+        const bar = document.createElement("span");
+        bar.className = "quantum-probability-bar";
+        const fill = document.createElement("span");
+        fill.style.width = (item.probability * 100) + "%";
+        bar.append(fill);
+        const value = document.createElement("strong");
+        value.textContent = (item.probability * 100).toFixed(2) + "%";
+        row.append(label, bar, value);
+        $q("#quantum-state").append(row);
+      }
+      $q("#quantum-history").replaceChildren();
+      for (const item of snap.history) {
+        const li = document.createElement("li");
+        li.textContent = item.gate + (item.qubits ? " q" + item.qubits.join(", q") : item.outcome ? " → " + item.outcome : "");
+        $q("#quantum-history").append(li);
+      }
+      $q("#quantum-target").innerHTML = Array.from({ length: snap.qubits }, (_, i) => '<option value="' + i + '">Qubit ' + i + '</option>').join("");
+      $q("#quantum-gate").querySelector('option[value="CNOT"]')?.remove();
+      if (snap.qubits > 1 && !$q("#quantum-gate").querySelector('option[value="CNOT"]')) {
+        const option = document.createElement("option"); option.value = "CNOT"; option.textContent = "CNOT"; $q("#quantum-gate").append(option);
+      }
+      $q("#quantum-status").textContent = snap.qubits + " qubit(s) · " + snap.state.length + " basis states · total probability " + snap.totalProbability.toFixed(6);
+    }
+    $q("#quantum-qubits").addEventListener("change", event => {
+      circuit = window.QuantumSimulator.createCircuit(Number(event.target.value));
+      render();
+    });
+    $q("#quantum-apply").addEventListener("click", () => {
+      try {
+        const gate = $q("#quantum-gate").value, target = Number($q("#quantum-target").value);
+        if (gate === "CNOT") circuit.cnot(target, (target + 1) % Number($q("#quantum-qubits").value));
+        else circuit[gate.toLowerCase()](target);
+        render();
+      } catch (error) { $q("#quantum-status").textContent = error.message; }
+    });
+    $q("#quantum-bell").addEventListener("click", () => {
+      $q("#quantum-qubits").value = "2";
+      circuit = window.QuantumSimulator.bellState();
+      render();
+      $q("#quantum-status").textContent = "Bell pair prepared: |00⟩ and |11⟩ each have 50% probability.";
+    });
+    $q("#quantum-measure").addEventListener("click", () => {
+      const result = circuit.measure();
+      render();
+      $q("#quantum-status").textContent = "Measured |" + result.bitstring + "⟩; probability before collapse " + (result.probability * 100).toFixed(2) + "%.";
+    });
+    $q("#quantum-reset").addEventListener("click", () => { circuit.reset(); render(); });
+    render();
   }
 
   function renderAbout(body) {
