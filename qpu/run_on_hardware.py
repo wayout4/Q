@@ -60,7 +60,12 @@ def main() -> int:
         print(rendered)
         return 0
     except Exception as exc:  # fail closed; never fabricate hardware results
-        print(f"ERROR: IBM Quantum hardware execution failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        message = str(exc)
+        if "Unable to retrieve instances" in message or "valid API token" in message or "InvalidAccountError" in type(exc).__name__:
+            print("ERROR: IBM rejected the credential. The GitHub secret is present, but it is not accepted as an IBM Quantum Platform API token.", file=sys.stderr)
+            print("FIX: In IBM Quantum Platform, create a fresh API key for Quantum Platform access, then replace the GitHub Actions secret IBM_API_KEY (or IBM_QUANTUM_API_KEY). Do not paste the key into chat or commit it. If IBM provides an instance/CRN for your account, add it as repository secret IBM_QUANTUM_INSTANCE.", file=sys.stderr)
+        else:
+            print(f"ERROR: IBM Quantum hardware execution failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
 
