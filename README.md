@@ -48,6 +48,14 @@ A release is accepted only for the implemented web-edition scope when:
 
 The current CI provides static contract checks and packaging validation. It does **not** by itself prove browser end-to-end behavior, mobile installation on every device, or offline behavior on physical hardware. Those need browser/device test evidence before the corresponding release gate can be marked complete.
 
+## Secure Q# messaging and 6G lab readiness
+
+Security design gates and infrastructure requirements are documented in:
+- [Q# secure messaging architecture](security/QSHARP-SECURE-MESSAGING.md)
+- [Operator, physical-device lab, and IMT-2030 readiness plan](infrastructure/6g-lab-and-operator-readiness.md)
+
+These are design and test plans, not proof that E2EE, operator connectivity, or 6G is already operational. The current messaging implementation stores plaintext message bodies. Do not use it for sensitive communications. No carrier/6G credentials, spectrum authorization, test SIMs, physical radio lab, or independent operator conformance report are provisioned by this repository. Do not publish credentials or attempt unauthorized network access.
+
 ## Native Android and iOS adapters
 
 Native adapter source has been added under `native/android/` and `native/ios/`. Android uses public ConnectivityManager/TelephonyManager APIs with permission-aware unknown fallbacks. iOS uses Network.framework path observation and does not claim radio-control capability. These files are integration source, not a completed Gradle/Xcode app, and have not been compiled or verified on physical phones by CI.
