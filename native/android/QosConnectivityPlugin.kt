@@ -50,7 +50,7 @@ class QosConnectivityPlugin(private val context: Context) {
                     TelephonyManager.NETWORK_TYPE_HSPAP,
                     TelephonyManager.NETWORK_TYPE_TD_SCDMA -> "3G"
                     TelephonyManager.NETWORK_TYPE_LTE -> "4G/LTE"
-                    TelephonyManager.NETWORK_TYPE_NR -> "5G SA"
+                    TelephonyManager.NETWORK_TYPE_NR -> "5G NR (SA/NSA unknown)"
                     else -> "Unknown"
                 }
                 registered = tm.dataNetworkType != TelephonyManager.NETWORK_TYPE_UNKNOWN
