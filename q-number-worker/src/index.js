@@ -116,7 +116,9 @@ export default {
       if (!row || !Number.isSafeInteger(Number(row.id)) || Number(row.id) < 1) {
         return json({ error: "Could not confirm the Q# assignment. Please retry." }, 503, origin, env);
       }
-      const qNumber = "Q# " + String(row.id).padStart(8, "0");
+      // Numeric Q# wire format: integer origin followed by an eight-digit decimal quanta field.
+      // Initial assignment starts at zero quanta; do not coerce this identifier to a JS Number.
+      const qNumber = String(row.id) + ".00000000";
       return json({ qNumber, status: "assigned", scope: "browser-installation" }, 200, origin, env);
     } catch {
       return json({ error: "The Q# registry is temporarily unavailable. Please retry." }, 503, origin, env);
