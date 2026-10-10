@@ -39,6 +39,18 @@ try {
   assert.equal(await page.locator("body").evaluate(el => el.classList.contains("light")), true);
   await page.locator(".window-close").click();
 
+  await page.locator('.app-tile[data-app="quantum"]').click();
+  assert.match(await page.locator(".window-body").innerText(), /state-vector simulation/);
+  await page.locator("#quantum-bell").click();
+  const quantumState = await page.locator("#quantum-state").innerText();
+  assert.match(quantumState, /50\.00%/);
+  assert.match(await page.locator("#quantum-status").innerText(), /Bell pair prepared/);
+  await page.locator("#quantum-measure").click();
+  assert.match(await page.locator("#quantum-history").innerText(), /MEASURE/);
+  await page.locator("#quantum-reset").click();
+  assert.match(await page.locator("#quantum-status").innerText(), /total probability 1\.000000/);
+  await page.locator(".window-close").click();
+
   await page.locator("#app-search").fill("no-such-app");
   assert.equal(await page.locator(".app-tile:visible").count(), 0);
   assert.equal(await page.locator("#no-results").isVisible(), true);
