@@ -54,3 +54,15 @@ test("reset restores |0> and clears history", () => {
   assert.deepEqual(Array.from(c.probabilities()), [1,0,0,0]);
   assert.equal(c.snapshot().history.length, 0);
 });
+
+test("Deutsch-Jozsa distinguishes constant and balanced oracle distributions", () => {
+  const constant = Q.deutschJozsa({ qubits: 3, oracle: "constant" });
+  const balanced = Q.deutschJozsa({ qubits: 3, oracle: "balanced" });
+  close(constant.distribution.reduce((a, b) => a + b, 0), 1);
+  close(balanced.distribution.reduce((a, b) => a + b, 0), 1);
+  close(constant.distribution[0], 1);
+  close(balanced.distribution[7], 1);
+  assert.equal(constant.measuredInput, 0);
+  assert.equal(balanced.measuredInput, 7);
+  assert.throws(() => Q.deutschJozsa({ qubits: 10 }), /input qubits/);
+});
