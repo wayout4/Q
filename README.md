@@ -56,6 +56,19 @@ Quantum OS uses the connectivity exposed by its host browser and device. `naviga
 
 Notes and appearance preferences are stored in the current browser profile. They are not synced to a cloud account. Clearing browser site data may remove them. This build does not request location, microphone, contacts, or other device permissions.
 
+## Q# messaging service
+
+The Worker exposes the initial Q# messaging API:
+- `POST /v1/q-number` assigns an idempotent browser-installation Q# after Turnstile verification and binds a client-generated random device token. Only a SHA-256 hash of that token is stored.
+- `GET /v1/identity?qNumber=1.00000000` checks whether a Q# exists.
+- `POST /v1/messages` sends a message to a recipient Q# using the authenticated device token.
+- `GET /v1/messages?after=0` retrieves up to 50 inbox messages after the supplied message ID.
+- Registration and message sends are rate-limited; the API enforces the exact GitHub Pages origin.
+
+**Security limitations:** this initial messaging release uses HTTPS in transit but stores message bodies as readable text in D1. It is **not end-to-end encrypted**, has no verified human accounts, and has no account/device recovery. The bearer token is kept in browser local storage, so browser-profile access or an XSS vulnerability could expose it. Do not use this for sensitive communications. End-to-end encryption, key verification, recovery, message deletion/retention controls, and production abuse monitoring are separate release gates.
+
+Unit and browser tests can validate code paths, but only a successful Cloudflare provisioning workflow and two independently registered browser installations can prove live user-to-user delivery.
+
 ## Public deployment
 
 To provision the real Q# assignment service, open **Settings → Secrets and variables → Actions** and add repository secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. The token must be scoped to this Cloudflare account with **D1 Edit**, **Workers Scripts Edit**, and **Turnstile Sites Read + Write**. Then open **Actions → Deploy Q# API and site → Run workflow**. That workflow creates or reuses the D1 database and Turnstile widget, applies the schema, deploys the rate-limited Worker, checks live readiness and rejection paths, writes the public API URL/site key to `quantum-config.js`, and deploys the configured site. Never commit the Cloudflare API token or Turnstile secret. The workflow cannot run successfully until those two secrets are set by an account-authorized person. After it succeeds, open the site and complete the Turnstile check to receive a real Q#; the system cannot complete that user verification on your behalf.
