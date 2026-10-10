@@ -197,7 +197,7 @@
     let qNumber = "";
     try { qNumber = localStorage.getItem("quantum-os-q-number") || ""; } catch { /* Session-only fallback. */ }
     body.innerHTML = '<p>A Q# is your Quantum identity for Quantum services. It is <strong>not</strong> a carrier phone number and does not by itself provide calls, SMS, emergency calling, or mobile data.</p>' +
-      '<div class="qnumber-card" aria-live="polite"><span class="qnumber-label">YOUR QUANTUM NUMBER</span><strong id="q-number-value">Not registered</strong><span id="q-number-status">This browser has not confirmed a server-assigned Q#.</span></div>' +
+      '<div class="qnumber-card" aria-live="polite"><span class="qnumber-label">YOUR Q# ORIGIN.QUANTA</span><strong id="q-number-value">Not registered</strong><span id="q-number-status">This browser has not confirmed a server-assigned Q#.</span></div>' +
       '<p id="q-number-explainer">Registration requires the live Quantum identity API and a bot-protection check. Your number is stored on the Quantum service, not generated as a fake local number.</p>' +
       '<div id="q-turnstile" class="q-turnstile"></div><p id="q-number-message" role="status" aria-live="polite"></p>' +
       '<button class="primary-button" id="q-number-register" type="button" disabled>Connect to Quantum registration</button>' +
