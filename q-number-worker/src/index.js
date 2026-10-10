@@ -118,6 +118,10 @@ export default {
       try { device = await authenticatedDevice(request, env); } catch { return json({ error: "Authentication service is temporarily unavailable." }, 503, origin, env); }
       if (!device) return json({ error: "Device authentication required. Register this browser first." }, 401, origin, env);
       if (request.method === "POST") {
+        try {
+          const rate = await env.Q_NUMBER_RATE_LIMITER.limit({ key: "message:" + device.q_number_id });
+          if (!rate.success) return json({ error: "Message rate limit reached. Wait one minute and retry." }, 429, origin, env);
+        } catch { return json({ error: "Messaging protection is temporarily unavailable." }, 503, origin, env); }
         let payload;
         try { payload = await request.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400, origin, env); }
         const recipientId = parseQNumber(payload.toQNumber);
