@@ -1,0 +1,36 @@
+name: Run real quantum hardware job
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run-qpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out QOS
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: qpu/requirements.txt
+      - name: Install Qiskit hardware client
+        run: python -m pip install -r qpu/requirements.txt
+      - name: Submit and wait for real QPU execution
+        env:
+          IBM_QUANTUM_API_KEY: ${{ secrets.IBM_QUANTUM_API_KEY }}
+          IBM_QUANTUM_INSTANCE: ${{ secrets.IBM_QUANTUM_INSTANCE }}
+        run: python qpu/run_on_hardware.py
+      - name: Upload real hardware result
+        if: always() && hashFiles('qpu-result.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: qos-real-quantum-hardware-result
+          path: qpu-result.json
+          if-no-files-found: error
+          retention-days: 14
