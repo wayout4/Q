@@ -61,9 +61,9 @@ test("assigns stable unique Q# values and is idempotent for the same install", a
     const again = await worker.fetch(request("/v1/q-number", body), config);
     const other = await worker.fetch(request("/v1/q-number", { ...body, installId: "abcdefab-cdef-abcd-efab-cdefabcdefab" }), config);
     assert.equal(first.status, 200);
-    assert.equal((await first.json()).qNumber, "Q# 00000001");
-    assert.equal((await again.json()).qNumber, "Q# 00000001");
-    assert.equal((await other.json()).qNumber, "Q# 00000002");
+    assert.equal((await first.json()).qNumber, "1.00000000");
+    assert.equal((await again.json()).qNumber, "1.00000000");
+    assert.equal((await other.json()).qNumber, "2.00000000");
   } finally {
     globalThis.fetch = oldFetch;
   }
