@@ -159,8 +159,48 @@
 
   function renderNetwork(body) {
     const online = navigator.onLine;
-    body.innerHTML = '<p>This status comes from the browser and does not guarantee that the internet, a specific service, or a carrier network is reachable.</p><div class="info-list"><span>Browser connectivity</span><strong>' + (online ? "Online" : "Offline") + '</strong><span>Service reachability</span><strong>Not tested</strong><span>Radio generation</span><strong>Not exposed here</strong><span>5G / 6G status</span><strong>Not verified</strong><span>Offline app shell</span><strong>' + ("serviceWorker" in navigator ? "Supported" : "Unavailable") + '</strong></div><button class="primary-button" id="refresh-network">Refresh status</button>';
-    $("#refresh-network", body).addEventListener("click", () => { updateNetwork(); renderNetwork(body); });
+    body.innerHTML = '<p>This panel separates browser reachability hints from verified radio information. It never guesses a cellular generation.</p>' +
+      '<div class="info-list"><span>Browser connectivity</span><strong>' + (online ? "Online" : "Offline") + '</strong>' +
+      '<span>Radio access technology</span><strong id="qos-rat">Checking…</strong>' +
+      '<span>Signal source</span><strong id="qos-rat-source">Checking…</strong>' +
+      '<span>Effective connection hint</span><strong id="qos-effective-type">Unknown</strong>' +
+      '<span>Estimated downlink</span><strong id="qos-downlink">Not exposed</strong>' +
+      '<span>Round-trip hint</span><strong id="qos-rtt">Not exposed</strong>' +
+      '<span>Service reachability</span><strong>Not verified</strong>' +
+      '<span>6G service</span><strong>Not available/verified by this app</strong>' +
+      '<span>Offline app shell</span><strong>' + ("serviceWorker" in navigator ? "Supported" : "Unavailable") + '</strong></div>' +
+      '<p id="qos-rat-limitation" role="status">Loading device-reported network capabilities…</p>' +
+      '<button class="primary-button" id="refresh-network">Refresh status</button>';
+    const text = (selector, value) => { const node = $(selector, body); if (node) node.textContent = value; };
+    const refresh = () => {
+      updateNetwork();
+      text("#qos-rat", "Checking…");
+      text("#qos-rat-source", "Checking…");
+      const adapter = window.QOSConnectivity;
+      if (!adapter || typeof adapter.getSnapshot !== "function") {
+        text("#qos-rat", "Unknown");
+        text("#qos-rat-source", "Browser fallback");
+        text("#qos-effective-type", "Unknown");
+        text("#qos-downlink", "Not exposed");
+        text("#qos-rtt", "Not exposed");
+        text("#qos-rat-limitation", "Connectivity adapter unavailable. Cellular generation cannot be inferred safely.");
+        return;
+      }
+      adapter.getSnapshot().then(snapshot => {
+        text("#qos-rat", snapshot.radioAccessTechnology || "Unknown");
+        text("#qos-rat-source", snapshot.source === "native" ? "Native device adapter" : "Browser API");
+        text("#qos-effective-type", snapshot.effectiveType || "Unknown");
+        text("#qos-downlink", Number.isFinite(snapshot.downlinkMbps) ? snapshot.downlinkMbps + " Mbps (estimate)" : "Not exposed");
+        text("#qos-rtt", Number.isFinite(snapshot.rttMs) ? snapshot.rttMs + " ms (estimate)" : "Not exposed");
+        text("#qos-rat-limitation", snapshot.limitation || "Device-reported values; service reachability not tested.");
+      }).catch(() => {
+        text("#qos-rat", "Unknown");
+        text("#qos-rat-source", "Browser fallback");
+        text("#qos-rat-limitation", "Could not read device capability data; no radio generation is assumed.");
+      });
+    };
+    $("#refresh-network", body).addEventListener("click", refresh);
+    refresh();
   }
 
   function renderSettings(body) {
