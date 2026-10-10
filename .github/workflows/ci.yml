@@ -20,8 +20,11 @@ jobs:
           node --check app.js
           node --check quantum-config.js
           node --check q-number-worker/src/index.js
+          node --check oeql/runtime.mjs
       - name: Run static acceptance contract tests
         run: python3 -m unittest discover -s tests -v
+      - name: Test OEQL runtime
+        run: node --test oeql/runtime.test.mjs
       - name: Test Q# assignment API
         run: node --test tests/q-number-worker.test.mjs
       - name: Validate web manifest JSON
