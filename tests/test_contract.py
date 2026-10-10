@@ -17,7 +17,7 @@ class QuantumOSContractTests(unittest.TestCase):
         cls.manifest = (ROOT / "manifest.webmanifest").read_text(encoding="utf-8")
 
     def test_required_application_controls_exist(self):
-        for app in ("notes", "calculator", "network", "settings", "qnumber", "messages", "about"):
+        for app in ("notes", "calculator", "network", "settings", "qnumber", "messages", "quantum", "about"):
             self.assertIn(f'data-app="{app}"', self.html)
             self.assertIn(f"{app}:", self.js)
 
@@ -41,6 +41,9 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('rel="manifest"', self.html)
         self.assertTrue((ROOT / "icon.svg").is_file())
         self.assertTrue((ROOT / "quantum-config.js").is_file())
+        self.assertTrue((ROOT / "quantum-sim/simulator.js").is_file())
+        self.assertIn('src="./quantum-sim/simulator.js"', self.html)
+        self.assertIn("function renderQuantumLab(body)", self.js)
 
     def test_responsive_and_accessible_shell(self):
         self.assertRegex(self.css, re.compile(r"@media\s*\(max-width:\s*760px\)"))
