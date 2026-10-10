@@ -312,7 +312,7 @@
 
   function renderMessages(body) {
     const config = window.QUANTUM_CONFIG || {};
-    const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\\/$/, "") : "";
+    const apiBase = typeof config.apiBase === "string" ? config.apiBase.replace(/\/$/, "") : "";
     const token = getClientToken();
     let after = 0;
     body.innerHTML = '<p>Message another Quantum user by their Q#. Messages use HTTPS in transit and are stored by the service. <strong>This release is not end-to-end encrypted.</strong> Do not send sensitive information.</p>' +
