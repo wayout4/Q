@@ -17,7 +17,7 @@ class QuantumOSContractTests(unittest.TestCase):
         cls.manifest = (ROOT / "manifest.webmanifest").read_text(encoding="utf-8")
 
     def test_required_application_controls_exist(self):
-        for app in ("notes", "calculator", "network", "settings", "qnumber", "about"):
+        for app in ("notes", "calculator", "network", "settings", "qnumber", "messages", "about"):
             self.assertIn(f'data-app="{app}"', self.html)
             self.assertIn(f"{app}:", self.js)
 
@@ -60,7 +60,7 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('data-app="qnumber"', self.html)
         self.assertIn('function renderQNumber(body)', self.js)
         self.assertIn('fetch(apiBase + "/v1/q-number"', self.js)
-        self.assertIn('!/^Q# [0-9]{8,}$/.test(data.qNumber)', self.js)
+        self.assertIn('!/^[1-9][0-9]*\\.00000000$/.test(data.qNumber)', self.js)
         self.assertIn('Registration is not live yet.', self.js)
         self.assertIn('carrier phone number', self.js)
         self.assertIn('quantum-config.js', self.html)
@@ -73,8 +73,10 @@ class QuantumOSContractTests(unittest.TestCase):
         self.assertIn('name = "Q_NUMBER_RATE_LIMITER"', config)
         self.assertIn("limit = 5", config)
         self.assertIn("period = 60", config)
-        self.assertIn("env.Q_NUMBER_RATE_LIMITER.limit({ key: installId })", worker_source)
+        self.assertIn('env.Q_NUMBER_RATE_LIMITER.limit({ key: "register:" + installId })', worker_source)
         self.assertIn("Too many registration attempts", worker_source)
+        self.assertIn('url.pathname === "/v1/messages"', worker_source)
+        self.assertIn("q_messages", (ROOT / "q-number-worker/schema.sql").read_text(encoding="utf-8"))
         self.assertIn("CLOUDFLARE_API_TOKEN", workflow)
         self.assertIn("--secrets-file=q-number-worker/.worker-secrets.json", workflow)
         self.assertIn("::add-mask::$turnstile_secret", workflow)
