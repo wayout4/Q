@@ -27,8 +27,14 @@ jobs:
           node --check app.js
           node --check quantum-config.js
           node --check q-number-worker/src/index.js
+          node --check quantum-sim/simulator.js
+          node --check oeql/runtime.mjs
       - name: Run static acceptance tests
         run: python3 -m unittest discover -s tests -v
+      - name: Test quantum state-vector simulator
+        run: node --test quantum-sim/simulator.test.mjs
+      - name: Test OEQL runtime
+        run: node --test oeql/runtime.test.mjs
       - name: Test Q# assignment API
         run: node --test tests/q-number-worker.test.mjs
       - name: Validate manifest
@@ -50,7 +56,8 @@ jobs:
           mkdir -p dist
           cp index.html styles.css immersive.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js dist/
           cp README.md dist/ABOUT.md
-          (cd dist && sha256sum index.html styles.css immersive.css app.js sw.js manifest.webmanifest icon.svg quantum-config.js > SHA256SUMS)
+          cp -R quantum-sim oeql dist/
+          (cd dist && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           (cd dist && sha256sum -c SHA256SUMS)
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
