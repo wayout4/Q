@@ -2,6 +2,10 @@ name: Run real quantum hardware job
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/real-quantum-hardware.yml'
 
 permissions:
   contents: read
