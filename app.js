@@ -288,7 +288,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Registration service returned HTTP " + response.status);
-        if (typeof data.qNumber !== "string" || !/^[1-9][0-9]*\\.00000000$/.test(data.qNumber)) {
+        if (typeof data.qNumber !== "string" || !/^[1-9][0-9]*\.00000000$/.test(data.qNumber)) {
           throw new Error("The service returned an invalid Q# response.");
         }
         qNumber = data.qNumber;
