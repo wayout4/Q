@@ -48,6 +48,16 @@ A release is accepted only for the implemented web-edition scope when:
 
 The current CI provides static contract checks and packaging validation. It does **not** by itself prove browser end-to-end behavior, mobile installation on every device, or offline behavior on physical hardware. Those need browser/device test evidence before the corresponding release gate can be marked complete.
 
+## Native Android and iOS adapters
+
+Native adapter source has been added under `native/android/` and `native/ios/`. Android uses public ConnectivityManager/TelephonyManager APIs with permission-aware unknown fallbacks. iOS uses Network.framework path observation and does not claim radio-control capability. These files are integration source, not a completed Gradle/Xcode app, and have not been compiled or verified on physical phones by CI.
+
+- [Android integration and device matrix](native/android/README.md)
+- [iOS integration and device matrix](native/ios/README.md)
+- [Auditable device/carrier/6G evidence ledger](native/DEVICE-INTEROP-TEST-REPORT.md)
+
+No native app signing, physical SIM/eSIM lab, operator certification, or 6G test network is connected to this repository automation. Therefore native/carrier interoperability and a live 6G connection remain **unverified**. The current Q# messaging backend stores message bodies as readable text and is not end-to-end encrypted; do not use it for sensitive communication.
+
 ## Connectivity and 6G
 
 QOS uses the connectivity exposed by its host browser/device. `navigator.onLine` is only a browser hint and does not prove remote service reachability. The web app cannot read or control all cellular radio details and does not implement a cellular modem, carrier core, or 5G/6G radio access.
