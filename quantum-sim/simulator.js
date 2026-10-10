@@ -86,13 +86,12 @@
 
   function bellState() { return createCircuit(2).h(0).cnot(0, 1); }
   function deutschJozsa({ qubits = 3, oracle = "balanced" } = {}) {
-    validateQubits(qubits);
+    if (!Number.isInteger(qubits) || qubits < 1 || qubits >= MAX_QUBITS) throw new RangeError("Deutsch-Jozsa input qubits must be from 1 to " + (MAX_QUBITS - 1));
     if (oracle !== "constant" && oracle !== "balanced") throw new TypeError("oracle must be constant or balanced");
     const circuit = createCircuit(qubits + 1);
     for (let q = 0; q <= qubits; q++) circuit.x(q);
     for (let q = 0; q <= qubits; q++) circuit.h(q);
     if (oracle === "balanced") for (let q = 0; q < qubits; q++) circuit.cnot(q, qubits);
-    circuit.h = circuit.h; // Keep circuit API explicit; apply final Hadamards to input register.
     for (let q = 0; q < qubits; q++) circuit.h(q);
     const result = circuit.snapshot();
     const distribution = Array(1 << qubits).fill(0);
