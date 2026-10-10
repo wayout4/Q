@@ -167,7 +167,7 @@
       '<span>Estimated downlink</span><strong id="qos-downlink">Not exposed</strong>' +
       '<span>Round-trip hint</span><strong id="qos-rtt">Not exposed</strong>' +
       '<span>Service reachability</span><strong>Not verified</strong>' +
-      '<span>6G service</span><strong>Not available/verified by this app</strong>' +
+      '<span>6G status</span><strong>Not available/verified by this app</strong>' +
       '<span>Offline app shell</span><strong>' + ("serviceWorker" in navigator ? "Supported" : "Unavailable") + '</strong></div>' +
       '<p id="qos-rat-limitation" role="status">Loading device-reported network capabilities…</p>' +
       '<button class="primary-button" id="refresh-network">Refresh status</button>';
